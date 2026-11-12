@@ -74,6 +74,16 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .unknown.warn{border-color:rgba(236,122,100,.5);color:var(--bad)}
 .unknown.ok{border-color:rgba(143,194,141,.4);color:var(--good)}
 .tradein .card{box-shadow:none}
+.stat.acct{text-align:left;cursor:pointer;font:inherit;color:inherit}
+.stat.acct b{font-size:16px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.fld input{background:rgba(0,0,0,.3);border:1px solid var(--edge-strong);border-radius:12px;padding:11px 12px;color:var(--fg);font:inherit;font-size:15px}
+.board{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column}
+.board li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--edge)}
+.board .rk{width:22px;color:var(--muted);font-weight:700;text-align:right;flex:none}
+.board .who{flex:1;min-width:0;display:flex;flex-direction:column}
+.board .who small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .me-row b{color:var(--amber)}
 .objs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .obj{border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .obj-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
@@ -232,6 +242,9 @@ h2 em{color:var(--amber)}
 <div id="modal"></div>
 <div id="toasts" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* =====================================================================
    1. DONNÉES DU JEU — modèles, couleurs disponibles (une photo par couleur)
@@ -362,7 +375,129 @@ function migrate(d){
   if(!(d.avatar>=1&&d.avatar<=AVATARS)) d.avatar=1;
   return d;
 }
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function save(){S.savedAt=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){} cloudSave();}
+
+/* =====================================================================
+   COMPTES EN LIGNE (Firebase) — la partie est sauvegardée dans parties/{uid}
+   et une ligne publique est tenue à jour dans classement/{uid}
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCH4VChD9xT-NojxZz2OrbKYFce8yqKTbQ",
+  authDomain: "cold-start-253a1.firebaseapp.com",
+  projectId: "cold-start-253a1",
+  storageBucket: "cold-start-253a1.firebasestorage.app",
+  messagingSenderId: "922768937151",
+  appId: "1:922768937151:web:cb208c2ad8baa14433360a"
+};
+const fb={ok:false, user:null, blocked:false, lastCloud:0, timer:null, syncedAt:0, board:null, pendingPseudo:null, conflict:null};
+let acct=null; // fenêtre de connexion : {mode:'login'|'signup'|'reset', busy, error, info}
+function fbInit(){
+  try{
+    if(!window.firebase||!firebase.initializeApp) return;
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    fb.auth=firebase.auth(); fb.db=firebase.firestore(); fb.ok=true;
+    fb.auth.onAuthStateChanged(u=>onUser(u).catch(e=>{fb.blocked=false;toast('Synchronisation impossible pour le moment.','bad');console.warn(e)}));
+  }catch(e){ fb.ok=false; console.warn(e); }
+}
+const fortuneOf=()=>Math.round(S.money+S.cars.reduce((a,c)=>a+valueOf(c),0));
+function cloudSave(force){
+  if(!fb.ok||!fb.user||fb.blocked) return;
+  const wait=8000-(Date.now()-fb.lastCloud);
+  if(!force && wait>0){ if(!fb.timer) fb.timer=setTimeout(()=>{fb.timer=null;cloudSave(true)},wait); return; }
+  fb.lastCloud=Date.now();
+  const uid=fb.user.uid, ts=firebase.firestore.FieldValue.serverTimestamp();
+  fb.db.collection('parties').doc(uid).set({save:JSON.stringify(S), level:S.level, money:Math.round(S.money), updatedAt:ts})
+    .then(()=>{fb.syncedAt=Date.now();}).catch(e=>console.warn(e));
+  fb.db.collection('classement').doc(uid).set({pseudo:S.pseudo||'Joueur', garage:S.garage, avatar:S.avatar, level:S.level, fortune:fortuneOf(), sold:S.stats.sold, updatedAt:ts})
+    .catch(e=>console.warn(e));
+}
+function adoptState(d){
+  S=migrate(d); auction=null; nego=null; hiring=null; ensureObjs();
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}
+}
+async function onUser(u){
+  fb.user=u; fb.board=null;
+  if(!u){ render(); return; }
+  fb.blocked=true;
+  const snap=await fb.db.collection('parties').doc(u.uid).get();
+  const cloud=snap.exists?JSON.parse(snap.data().save):null;
+  const localHasProgress=S.level>1||S.stats.sold>0||S.stats.bought>0;
+  if(cloud){
+    if(S.ownerUid===u.uid){ if((cloud.savedAt||0)>(S.savedAt||0)) adoptState(cloud); }
+    else if(!S.ownerUid && localHasProgress){ fb.conflict=cloud; renderModal(); return; }
+    else adoptState(cloud);
+  } else if(S.ownerUid && S.ownerUid!==u.uid){ S=freshState(); seed(); ensureObjs(); }
+  finishLogin();
+}
+function finishLogin(){
+  const u=fb.user; if(!u) return;
+  S.ownerUid=u.uid;
+  if(fb.pendingPseudo){ S.pseudo=fb.pendingPseudo; fb.pendingPseudo=null; }
+  if(!S.pseudo) S.pseudo=u.displayName||(u.email||'Joueur').split('@')[0];
+  fb.blocked=false; fb.conflict=null; acct=null;
+  save(); cloudSave(true); renderModal(); render();
+  toast(`Connecté : ${S.pseudo}. Votre partie est sauvegardée en ligne.`,'good');
+}
+function resolveConflict(keep){
+  if(keep==='cloud') adoptState(fb.conflict);
+  finishLogin();
+}
+const AUTH_ERR={'auth/email-already-in-use':'Un compte existe déjà avec cette adresse. Connectez-vous plutôt.',
+  'auth/invalid-email':'Adresse e-mail invalide.','auth/weak-password':'Le mot de passe doit faire au moins 6 caractères.',
+  'auth/invalid-credential':'E-mail ou mot de passe incorrect.','auth/wrong-password':'E-mail ou mot de passe incorrect.',
+  'auth/user-not-found':'Aucun compte avec cette adresse.','auth/too-many-requests':'Trop de tentatives. Réessayez dans quelques minutes.',
+  'auth/network-request-failed':'Pas de connexion internet.','auth/missing-password':'Indiquez votre mot de passe.'};
+async function acctSubmit(){
+  if(!fb.ok||!acct) return;
+  const email=(drafts['acct-email']||'').trim(), pass=drafts['acct-pass']||'', pseudo=(drafts['acct-pseudo']||'').trim();
+  acct.error=''; acct.info='';
+  if(acct.mode==='signup' && pseudo.length<2){ acct.error='Choisissez un pseudo d’au moins 2 caractères.'; return renderModal(); }
+  acct.busy=true; renderModal();
+  try{
+    if(acct.mode==='login') await fb.auth.signInWithEmailAndPassword(email,pass);
+    else if(acct.mode==='signup'){
+      fb.pendingPseudo=pseudo.slice(0,20);
+      const cred=await fb.auth.createUserWithEmailAndPassword(email,pass);
+      await cred.user.updateProfile({displayName:fb.pendingPseudo||pseudo});
+    } else { await fb.auth.sendPasswordResetEmail(email); acct.info='Un e-mail pour choisir un nouveau mot de passe vient de vous être envoyé.'; }
+    if(acct) acct.busy=false;
+    delete drafts['acct-pass'];
+  }catch(e){ fb.pendingPseudo=null; if(acct){ acct.busy=false; acct.error=AUTH_ERR[e.code]||'Une erreur est survenue. Réessayez.'; } }
+  renderModal();
+}
+async function logout(){
+  if(!fb.ok||!fb.user) return;
+  cloudSave(true);
+  await fb.auth.signOut();
+  S=freshState(); seed(); ensureObjs(); auction=null; nego=null; hiring=null; delete drafts.confirmLogout;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}
+  renderModal(); render(); toast('Déconnecté. Votre partie vous attend en ligne.');
+}
+async function loadBoard(){
+  if(!fb.ok||!fb.user) return;
+  fb.board='loading'; render();
+  try{
+    const q=await fb.db.collection('classement').orderBy('fortune','desc').limit(20).get();
+    fb.board=q.docs.map(d=>({uid:d.id,...d.data()}));
+  }catch(e){ fb.board='error'; }
+  render();
+}
+function acctPanel(){
+  if(!fb.ok) return `<section class="panel glass"><h3>Compte en ligne</h3><p class="meta">Les comptes ne sont pas disponibles ici. Ouvrez le jeu depuis son adresse GitHub Pages pour vous connecter. Votre partie reste sauvegardée dans ce navigateur.</p></section>`;
+  if(!fb.user) return `<section class="panel glass"><h3>Compte en ligne</h3><p class="meta">Vous jouez en invité : la partie n'est sauvegardée que dans ce navigateur. Créez un compte pour la retrouver sur tous vos appareils et apparaître au classement.</p>
+    <div class="row"><button class="btn main" data-act="acctOpen" data-id="signup">Créer un compte</button><button class="btn" data-act="acctOpen" data-id="login">Se connecter</button></div></section>`;
+  const b=fb.board;
+  return `<section class="panel glass"><h3>Compte en ligne</h3>
+    <div class="kv"><span>Pseudo</span><b>${esc(S.pseudo||'')}</b><span>E-mail</span><b style="overflow-wrap:anywhere">${esc(fb.user.email||'')}</b><span>Sauvegarde</span><b>${fb.syncedAt?'à jour':'en cours…'}</b></div>
+    <div class="row" style="margin-top:14px">${drafts.confirmLogout?`<span class="meta">Se déconnecter de cet appareil ?</span><button class="btn danger" data-act="logout">Oui</button><button class="btn ghost" data-act="logout0">Annuler</button>`:`<button class="btn ghost" data-act="logout1">Se déconnecter</button>`}</div>
+  </section>
+  <section class="panel glass"><h3>Classement</h3>
+    ${b==null?`<p class="meta">Les 20 garages les plus riches, tous joueurs confondus.</p><button class="btn" data-act="board">Afficher le classement</button>`
+    :b==='loading'?`<p class="meta">Chargement…</p>`:b==='error'?`<p class="meta">Impossible de charger le classement.</p><button class="btn" data-act="board">Réessayer</button>`
+    :`<ol class="board">${b.map((r,i)=>`<li class="${r.uid===fb.user.uid?'me-row':''}"><span class="rk num">${i+1}</span>${portrait(avatarSrc(r.avatar||1),'face sm','')}<span class="who"><b>${esc(r.pseudo||'Joueur')}</b><small>${esc(r.garage||'')} · niv. ${r.level||1}</small></span><b class="num">${eur(r.fortune||0)}</b></li>`).join('')}</ol>
+      <button class="btn ghost" data-act="board">Actualiser</button>`}
+  </section>`;
+}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));if(d&&d.v===2)return migrate(d)}catch(e){}return null}
 
 const lvl=()=>LEVELS[S.level];
@@ -818,6 +953,7 @@ function render(){
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
       <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${lvl().parking}</b></div>
+      ${fb.ok?(fb.user?`<button class="stat glass acct" data-act="tab" data-id="profil"><span>Compte</span><b>${esc(S.pseudo||'Joueur')}</b></button>`:`<button class="stat glass acct" data-act="acctOpen" data-id="login"><span>Compte</span><b>Se connecter</b></button>`):''}
     </div>`;
   document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${k==='showroom'&&S.clients.length?`<span class="pill">${S.clients.length}</span>`:''}${k==='objectifs'&&S.objs.some(o=>o.done)?`<span class="pill">${S.objs.filter(o=>o.done).length}</span>`:''}</button>`).join('');
   document.getElementById('view').innerHTML=({encheres:viewLots,stock:viewStock,atelier:viewAtelier,showroom:viewShowroom,equipe:viewEquipe,profil:viewProfil,objectifs:viewObjectifs})[S.tab]();
@@ -938,6 +1074,7 @@ function viewProfil(){
   const r=upgradeReqs();
   return `<h2>Votre <em>affaire</em></h2>
   <div class="cols">
+    ${acctPanel()}
     <section class="panel glass"><h3>Votre avatar</h3>
       <div class="looks many">${Array.from({length:AVATARS},(_,i)=>`<button class="look" data-act="avatar" data-id="${i+1}" aria-pressed="${S.avatar===i+1}" aria-label="Avatar ${i+1}"><img src="${avatarSrc(i+1)}" alt="" onerror="this.onerror=null;this.src=SIL"></button>`).join('')}</div>
     </section>
@@ -983,6 +1120,34 @@ function renderModal(){
         <button class="btn ghost" data-act="leaveAuction" ${a.leader==='player'?'disabled':''}>Quitter la salle</button></div>
         <div class="meta">Trésorerie : ${eur(S.money)}</div>`}
       </div></div></div>`;
+    return;
+  }
+  if(fb.conflict){
+    const c=fb.conflict;
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Choisir la partie"><div class="inner">
+      <div class="quote" style="font-style:normal">Deux parties trouvées</div>
+      <p class="meta" style="margin:0">Ce compte a déjà une partie en ligne, et vous avez aussi une partie sur cet appareil. Laquelle garder ? L'autre sera remplacée.</p>
+      <div class="cols">
+        <div class="panel glass"><h3>En ligne</h3><div class="kv"><span>Garage</span><b>${esc(c.garage)}</b><span>Niveau</span><b>${c.level}</b><span>Trésorerie</span><b class="num">${eur(c.money)}</b><span>Ventes</span><b class="num">${c.stats.sold}</b></div>
+          <button class="btn main" style="margin-top:12px" data-act="keepCloud">Garder celle-ci</button></div>
+        <div class="panel glass"><h3>Cet appareil</h3><div class="kv"><span>Garage</span><b>${esc(S.garage)}</b><span>Niveau</span><b>${S.level}</b><span>Trésorerie</span><b class="num">${eur(S.money)}</b><span>Ventes</span><b class="num">${S.stats.sold}</b></div>
+          <button class="btn main" style="margin-top:12px" data-act="keepLocal">Garder celle-ci</button></div>
+      </div></div></div></div>`;
+    return;
+  }
+  if(acct){
+    const md=acct.mode;
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Compte"><form class="inner" id="acct-form" novalidate>
+      <div class="quote" style="font-style:normal">${md==='signup'?'Créer un compte':md==='reset'?'Mot de passe oublié':'Se connecter'}</div>
+      <p class="meta" style="margin:0">${md==='signup'?'Votre partie en cours sera gardée et sauvegardée en ligne.':md==='reset'?'Indiquez votre adresse, vous recevrez un lien pour choisir un nouveau mot de passe.':'Retrouvez votre garage sur tous vos appareils.'}</p>
+      ${md==='signup'?`<label class="fld" for="acct-pseudo"><span>Pseudo (visible au classement)</span><input id="acct-pseudo" data-draft="acct-pseudo" maxlength="20" autocomplete="nickname" value="${esc(drafts['acct-pseudo']||'')}"></label>`:''}
+      <label class="fld" for="acct-email"><span>Adresse e-mail</span><input id="acct-email" data-draft="acct-email" type="email" autocomplete="email" value="${esc(drafts['acct-email']||'')}"></label>
+      ${md!=='reset'?`<label class="fld" for="acct-pass"><span>Mot de passe${md==='signup'?' (6 caractères minimum)':''}</span><input id="acct-pass" data-draft="acct-pass" type="password" autocomplete="${md==='signup'?'new-password':'current-password'}" value="${esc(drafts['acct-pass']||'')}"></label>`:''}
+      ${acct.error?`<div class="unknown warn">${esc(acct.error)}</div>`:''}${acct.info?`<div class="unknown ok">${esc(acct.info)}</div>`:''}
+      <div class="row"><button class="btn main" type="submit" ${acct.busy?'disabled':''}>${acct.busy?'Patientez…':md==='signup'?'Créer mon compte':md==='reset'?'Envoyer le lien':'Se connecter'}</button>
+        <button class="btn ghost" type="button" data-act="acctClose">Annuler</button></div>
+      <div class="row" style="gap:4px 16px">${md!=='login'?`<button class="btn ghost" type="button" data-act="acctMode" data-id="login">J'ai déjà un compte</button>`:`<button class="btn ghost" type="button" data-act="acctMode" data-id="signup">Créer un compte</button><button class="btn ghost" type="button" data-act="acctMode" data-id="reset">Mot de passe oublié</button>`}</div>
+    </form></div></div>`;
     return;
   }
   if(hiring){
@@ -1037,6 +1202,7 @@ function toast(t,kind){
 
 document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.draft;if(k)drafts[k]=e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='counter')negoCounter();});
+document.addEventListener('submit',e=>{if(e.target.id==='acct-form'){e.preventDefault();acctSubmit();}});
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled)return;
   const id=b.dataset.id, n=+id;
@@ -1075,7 +1241,16 @@ document.addEventListener('click',e=>{
     case 'fire1': drafts.confirmFire=n; render(); break;
     case 'fire0': delete drafts.confirmFire; render(); break;
     case 'fire': fire(n); break;
-    case 'reset2': delete drafts.confirmReset; S=freshState(); seed(); auction=null; nego=null; hiring=null; renderModal(); commit(); break;
+    case 'acctOpen': acct={mode:id||'login',busy:false,error:'',info:''}; renderModal(); break;
+    case 'acctClose': acct=null; renderModal(); break;
+    case 'acctMode': acct={mode:id,busy:false,error:'',info:''}; renderModal(); break;
+    case 'keepCloud': resolveConflict('cloud'); break;
+    case 'keepLocal': resolveConflict('local'); break;
+    case 'logout1': drafts.confirmLogout=true; render(); break;
+    case 'logout0': delete drafts.confirmLogout; render(); break;
+    case 'logout': logout(); break;
+    case 'board': loadBoard(); break;
+    case 'reset2': { const o=S.ownerUid, p=S.pseudo; delete drafts.confirmReset; S=freshState(); S.ownerUid=o; S.pseudo=p; seed(); ensureObjs(); auction=null; nego=null; hiring=null; renderModal(); commit(); cloudSave(true); break; }
   }
 });
 
@@ -1086,6 +1261,7 @@ function start(data){
   if(!S){S=freshState(); seed();}
   ensureObjs();
   render(); renderModal();
+  fbInit();
   setInterval(tick,1000); setInterval(save,5000);
 }
 window.claude?.hot?.snapshot?.(()=>({S}));
