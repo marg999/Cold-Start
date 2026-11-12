@@ -1,0 +1,658 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cold Start</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : les photos font le décor, l'interface s'efface. Un grand bandeau photo du garage ouvre la page,
+   puis des panneaux sombres translucides posés sur une version floutée du même lieu.
+   Chaque voiture est posée sur le béton ciré du décor, avec ombre de contact et reflet. */
+:root{
+  --bg:#0d0a08; --glass:rgba(22,16,12,.62); --glass-strong:rgba(18,13,10,.86);
+  --edge:rgba(255,236,210,.09); --edge-strong:rgba(255,236,210,.18);
+  --fg:#f3ebe0; --muted:#a99c8b; --faint:#6f6457;
+  --amber:#f2a65a; --amber-deep:#c97b35;
+  --good:#8fc28d; --warn:#e7b85a; --bad:#ec7a64;
+  --display:"Instrument Serif",Georgia,serif;
+  --body:"Manrope",system-ui,-apple-system,sans-serif;
+  --r:20px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:15px;line-height:1.5;min-height:100%;padding-block:0 72px;-webkit-font-smoothing:antialiased}
+#ambient{position:fixed;inset:0;z-index:-1;background:url("decor-flou.jpg") center/cover no-repeat,var(--bg);opacity:.75}
+#ambient::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,transparent,rgba(13,10,8,.85))}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.glass{background:var(--glass);border:1px solid var(--edge);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+
+/* Bandeau photo */
+.hero{position:relative;min-height:clamp(260px,38vw,420px);display:flex;align-items:flex-end;
+  background:linear-gradient(180deg,rgba(13,10,8,.15) 0%,rgba(13,10,8,.05) 40%,rgba(13,10,8,.92) 100%),url("decor-garage.jpg") center 35%/cover no-repeat,#22170f}
+.hero .wrap{width:100%;display:flex;flex-wrap:wrap;gap:18px 28px;align-items:flex-end;justify-content:space-between;padding-block:28px 26px}
+.brand{min-width:0;flex:1 1 300px}
+.brand small{display:block;font-size:11px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+.brand h1{margin:0;font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(48px,8vw,92px);line-height:.92;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.brand .lvl{margin-top:8px;color:var(--muted);font-size:14px}
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{border-radius:16px;padding:10px 16px;min-width:130px}
+.stat span{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-weight:600;font-size:20px;letter-spacing:-.01em}
+.stat.money b{color:var(--amber)}
+.repbar{height:3px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:6px;overflow:hidden}
+.repbar i{display:block;height:100%;background:var(--amber)}
+
+/* Onglets */
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding-block:12px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tabs{display:flex;gap:4px;padding:5px;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.tabs button{flex:none;border:0;background:transparent;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;color:var(--muted)}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{background:var(--fg);color:#140f0b}
+.tabs .pill{display:inline-block;margin-left:6px;min-width:19px;padding:0 6px;border-radius:999px;background:var(--amber);color:#140f0b;font-size:11px;line-height:19px}
+
+h2{font-family:var(--display);font-weight:400;font-size:40px;line-height:1.05;letter-spacing:-.01em;margin:26px 0 6px;text-wrap:balance}
+h2 em{color:var(--amber)}
+.lead{color:var(--muted);margin:0 0 20px;max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px}
+.empty{border:1px dashed var(--edge-strong);border-radius:var(--r);padding:30px;color:var(--muted);text-align:center;background:rgba(13,10,8,.4)}
+
+/* Scène photo d'une voiture */
+.stage{position:relative;aspect-ratio:16/10;max-width:100%;overflow:hidden;
+  background:url("decor-garage.jpg") 80% 82%/160% auto no-repeat,#1c140e}
+.stage::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 35%,transparent 40%,rgba(10,7,5,.55)),linear-gradient(180deg,rgba(10,7,5,.35),transparent 35%)}
+.stage.atelier{background:url("decor-atelier.jpg") 93% 76%/200% auto no-repeat,#1c140e}
+.car{position:absolute;left:50%;bottom:5%;width:min(calc(var(--w)*1.27),92%);transform:translateX(-50%);z-index:2}
+.car img{display:block;width:100%;height:auto;filter:brightness(.8) contrast(1.08) saturate(.9) sepia(.22)}
+.car.refl{bottom:auto;top:95%;z-index:1;opacity:.24;transform:translateX(-50%) scaleY(-1);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,transparent 38%);mask-image:linear-gradient(to top,#000 0%,transparent 38%)}
+.stage.atelier .car{bottom:17%;width:calc(var(--w)*.8)}
+.stage.atelier .car.refl{top:83%;bottom:auto}
+.dust{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .32 0 0 0 0 .2 0 0 0 1.6 -.45'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23d)'/%3E%3C/svg%3E"),rgba(120,92,60,.45);
+  -webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.shade{position:absolute;z-index:1;left:50%;bottom:1.5%;width:min(calc(var(--w)*1.3),94%);height:9%;transform:translateX(-50%);
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.85) 0%,rgba(0,0,0,.5) 45%,transparent 72%)}
+.stage.atelier .shade{bottom:13.5%}
+.tag{position:absolute;z-index:4;top:12px;right:12px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:999px}
+.tag.l{right:auto;left:12px}
+.lotno{position:absolute;z-index:4;top:12px;left:12px;font-family:var(--display);font-size:26px;line-height:1;padding:6px 12px 4px;border-radius:12px}
+.lotno small{font-family:var(--body);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-right:6px;vertical-align:4px}
+
+/* Carte */
+.card{border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 20px 40px rgba(0,0,0,.35)}
+.body{padding:14px 18px 18px;display:flex;flex-direction:column;gap:12px;flex:1}
+.title{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.title h3{margin:0;font-family:var(--display);font-weight:400;font-size:28px;line-height:1.05}
+.title h3 span{color:var(--muted);font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:2px}
+.meta{color:var(--muted);font-size:13.5px}
+.price{font-weight:700;font-size:17px;color:var(--amber);white-space:nowrap}
+.conds{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+.cond{font-size:12px;color:var(--muted)}
+.cond div{display:flex;justify-content:space-between}
+.bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;border-radius:4px}
+.unknown{font-size:13.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--edge);border-radius:14px;padding:10px 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row.end{margin-top:auto}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
+.kv span{color:var(--muted)}
+
+.btn{border:1px solid var(--edge-strong);background:rgba(255,255,255,.04);border-radius:12px;padding:9px 15px;font-weight:600;font-size:14px}
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn.main{border-color:var(--amber);background:var(--amber);color:#1a1009}
+.btn.main:hover{background:#f6b46f}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--fg)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn small{font-weight:500;opacity:.75;font-size:12px;margin-left:4px}
+.field{display:flex;align-items:center;background:rgba(0,0,0,.3);border:1px solid var(--edge-strong);border-radius:12px;padding:0 12px;min-width:0}
+.field input{background:transparent;border:0;color:inherit;font:inherit;font-weight:600;font-variant-numeric:tabular-nums;width:100px;padding:9px 0}
+.field span{color:var(--muted);font-size:13px}
+
+/* Atelier */
+.bays{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;margin-bottom:8px}
+.bay{border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.bay .lbl{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.bay .lbl b{color:var(--amber);letter-spacing:.05em}
+.bay .in{padding:14px 18px 18px;display:flex;flex-direction:column;gap:8px}
+.bay .free{aspect-ratio:16/10;background:url("decor-atelier.jpg") 93% 76%/200% auto no-repeat;position:relative}
+.bay .free span{position:absolute;inset:auto 0 18px;text-align:center;color:var(--fg);font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 2px 10px #000}
+.progress{height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--amber);transition:width 1s linear}
+.repairs{display:flex;flex-direction:column;gap:6px}
+.repairs .btn{display:flex;justify-content:space-between;gap:8px;text-align:left}
+
+/* Clients */
+.clients{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.client{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between;border-radius:var(--r);padding:14px 18px}
+.client .who{font-family:var(--display);font-size:24px;line-height:1.1}
+.client .who small{display:block;font-family:var(--body);color:var(--muted);font-size:13.5px}
+.persona{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--amber);color:var(--amber);margin-left:8px;vertical-align:4px}
+
+/* Profil */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.panel{border-radius:var(--r);padding:20px;min-width:0}
+.panel h3{margin:0 0 12px;font-family:var(--display);font-weight:400;font-size:28px}
+.req{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--edge);font-size:14px}
+.req:last-of-type{border-bottom:0}
+.ok{color:var(--good)} .ko{color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;max-height:340px;overflow-y:auto;font-size:13.5px}
+.log li{padding:7px 0;border-bottom:1px solid var(--edge);display:flex;gap:10px}
+.log time{color:var(--faint);font-size:12px;flex:none;font-variant-numeric:tabular-nums}
+
+/* Fenêtre */
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(6,4,3,.6);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.modal{width:min(600px,100%);max-height:100%;overflow-y:auto;border-radius:24px;background:var(--glass-strong);border:1px solid var(--edge-strong);box-shadow:0 40px 80px rgba(0,0,0,.6)}
+.modal .inner{padding:18px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.lounge{position:relative;height:190px;background:url("decor-garage.jpg") 14% 74%/220% auto no-repeat,#1c140e}
+.lounge::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,7,5,.1),rgba(18,13,10,.95))}
+.lounge .who{position:absolute;z-index:1;left:22px;bottom:14px;font-family:var(--display);font-size:32px;line-height:1}
+.lounge .who small{display:block;font-family:var(--body);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+.bigprice{font-family:var(--display);font-size:52px;line-height:1;color:var(--amber)}
+.timer{font-size:26px;font-weight:600}
+.timer.hot{color:var(--bad)}
+.leader{font-size:14.5px;color:var(--muted)}
+.leader b{color:var(--fg)}
+.quote{font-family:var(--display);font-style:italic;font-size:24px;line-height:1.25}
+.patience{display:flex;gap:4px}
+.patience i{width:22px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
+.patience i.on{background:var(--amber)}
+
+/* Notifications */
+#toasts{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;width:min(420px,calc(100% - 32px))}
+.toast{border-radius:14px;padding:11px 15px;font-size:14px;background:var(--glass-strong);border:1px solid var(--edge-strong);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.45);animation:in .25s ease-out;display:flex;gap:10px;align-items:baseline}
+.toast::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--amber);transform:translateY(-1px)}
+.toast.bad::before{background:var(--bad)} .toast.good::before{background:var(--good)}
+@keyframes in{from{transform:translateY(8px);opacity:.3}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}.progress i{transition:none}}
+@media (max-width:540px){.stat{min-width:0;flex:1 1 40%}.bigprice{font-size:42px}h2{font-size:32px}}
+</style>
+
+<div id="ambient"></div>
+<header class="hero"><div class="wrap" id="top"></div></header>
+<div class="wrap">
+  <nav><div class="tabs glass" id="tabs" role="tablist"></div></nav>
+  <main id="view"></main>
+</div>
+<div id="modal"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   1. DONNÉES DU JEU — modèles, couleurs disponibles (une photo par couleur)
+   ===================================================================== */
+const YEAR = 2026;
+const LEVELS = [null,
+  {name:'Terrain vague', parking:3, ateliers:1, tiers:[1]},
+  {name:'Petit garage',  parking:5, ateliers:2, tiers:[1,2]},
+];
+const UPGRADES = {2:{cost:25000, money:40000, rep:15, sold:5}};
+
+// w = largeur de la voiture dans la scène (en %), pour respecter les gabarits
+const MODELS = [
+  {id:'piccola', brand:'Ferrano',   name:'Piccola',  tier:1, base:13500, w:50, colors:[['creme','Blanc crème'],['jaune','Jaune soleil'],['rouge','Rouge vif']]},
+  {id:'lumo',    brand:'Arvane',    name:'Lumo',     tier:1, base:15500, w:56, colors:[['vert','Vert anglais'],['creme','Blanc crème'],['gulf','Bleu Gulf']]},
+  {id:'kesta',   brand:'Volkner',   name:'Kesta',    tier:1, base:22500, w:62, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['argent','Argent']]},
+  {id:'sereno',  brand:'Maurel',    name:'Sereno',   tier:1, base:24000, w:68, colors:[['argent','Argent'],['olive','Vert olive'],['noir','Noir verni']]},
+  {id:'ostra',   brand:'Volkner',   name:'Ostra',    tier:2, base:39000, w:74, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['vert','Vert anglais']]},
+  {id:'atlas',   brand:'Maurel',    name:'Atlas',    tier:2, base:36000, w:66, colors:[['argent','Argent'],['olive','Vert olive'],['rouge','Rouge grenat']]},
+  {id:'ridge',   brand:'Kaiden',    name:'Ridge',    tier:2, base:43000, w:68, colors:[['ardoise','Gris ardoise'],['creme','Blanc crème'],['orange','Orange cuivré']]},
+  {id:'v4',      brand:'Halvorsen', name:'V4 Coupé', tier:2, base:56000, w:70, colors:[['argent','Argent'],['jaune','Jaune course'],['orange','Orange course']]},
+];
+const CLIENT_NAMES = ['M. Bertin','Mme Lefèvre','M. Haddad','Mme Rossi','M. Petit','Mme Diallo','M. Garnier','Mme Moreau','M. Lambert','Mme Chevalier','M. Roux','Mme Fontaine','M. Nguyen','Mme Girard'];
+const RIVALS = ['Garage Martin','Auto Prestige 93','Occasions Leroy','M. Faure, marchand','Car Center Nord'];
+const PERSONAS = {
+  negociateur:{label:'Négociateur', maxF:.93, offerF:.76, patience:4},
+  presse:     {label:'Pressé',       maxF:1.00,offerF:.90, patience:2},
+  indecis:    {label:'Indécis',      maxF:.97, offerF:.84, patience:3},
+};
+const COMPS = {
+  meca: {label:'Mécanique',  w:.10},
+  carro:{label:'Carrosserie',w:.08},
+  inter:{label:'Intérieur',  w:.05},
+  pneus:{label:'Pneus',      w:.03},
+};
+
+/* =====================================================================
+   2. OUTILS
+   ===================================================================== */
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rnd(a,b+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const r100=n=>Math.round(n/100)*100;
+const eur=n=>Math.round(n).toLocaleString('fr-FR')+' €';
+const kmf=n=>Math.round(n).toLocaleString('fr-FR')+' km';
+const now=()=>Date.now();
+const model=id=>MODELS.find(m=>m.id===id);
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* =====================================================================
+   3. MOTEUR DE JEU
+   ===================================================================== */
+const SAVE_KEY='concession_tycoon_v2';
+let S, auction=null, nego=null;
+const drafts={};
+
+function freshState(){
+  return {v:2, garage:'Garage du Canal', money:15000, rep:5, level:1, uid:1,
+    cars:[], lots:[], clients:[], returns:[], log:[],
+    nextLotAt:0, nextClientAt:0, tab:'encheres',
+    stats:{bought:0, sold:0, profit:0, spent:0}};
+}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));if(d&&d.v===2)return d}catch(e){}return null}
+
+const lvl=()=>LEVELS[S.level];
+const avgCond=c=>c.meca*.35+c.carro*.3+c.inter*.2+c.pneus*.15;
+function valueOf(car,cond){
+  const m=model(car.modelId), age=Math.max(0,YEAR-car.year);
+  const a=Math.pow(.885,age), k=Math.max(.35,1-car.km/320000);
+  const cf=.4+.6*(cond ?? avgCond(car.cond));
+  return r100(m.base*a*k*cf);
+}
+function newCar(tier){
+  const m=pick(MODELS.filter(x=>x.tier===tier));
+  const year=ri(2011,2024), age=YEAR-year;
+  const km=Math.round((age*rnd(7000,19000)+rnd(0,6000))/1000)*1000;
+  const q=rnd(.25,.92), c=()=>+clamp(q+rnd(-.25,.2),.08,1).toFixed(2);
+  const [cs,cn]=pick(m.colors);
+  return {uid:S.uid++, modelId:m.id, year, km, color:{s:cs,n:cn}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
+    inspected:false, status:'lot', paid:0, spent:0};
+}
+function newLot(){
+  const car=newCar(pick(lvl().tiers)); const v=valueOf(car);
+  return {id:car.uid, car, start:Math.max(500,r100(v*rnd(.35,.5))), rivalMax:v*rnd(.62,.98)};
+}
+function log(t){S.log.unshift({t,at:now()}); S.log=S.log.slice(0,60);}
+const parkingUsed=()=>S.cars.length;
+const ateliersUsed=()=>S.cars.filter(c=>c.status==='atelier').length;
+const onSale=()=>S.cars.filter(c=>c.status==='vente');
+
+// --- Enchères
+function inspect(lotId){
+  const l=S.lots.find(x=>x.id===lotId); if(!l||l.car.inspected)return;
+  if(S.money<150)return toast('Pas assez de trésorerie pour l’inspection.','bad');
+  S.money-=150; l.car.inspected=true; l.car.spent+=150; S.stats.spent+=150;
+  toast(`Inspection faite : ${carName(l.car)}.`); commit();
+}
+const stepOf=p=>p<5000?100:p<20000?250:500;
+function startAuction(lotId){
+  const l=S.lots.find(x=>x.id===lotId); if(!l)return;
+  if(parkingUsed()>=lvl().parking)return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  auction={lotId, price:l.start, leader:null, endsAt:now()+15000, rivalMax:l.rivalMax,
+    nextRivalAt:now()+rnd(1800,3500), rival:pick(RIVALS), done:false, carCache:l.car};
+  renderModal();
+}
+function playerBid(){
+  const a=auction; if(!a||a.done)return;
+  const p=a.leader?a.price+stepOf(a.price):a.price;
+  if(p>S.money)return toast('Enchère au-dessus de votre trésorerie.','bad');
+  a.price=p; a.leader='player'; a.endsAt=Math.max(a.endsAt,now()+6000); renderModal();
+}
+function auctionTick(){
+  const a=auction; if(!a||a.done)return;
+  const t=now();
+  if(a.leader!=='rival'){
+    const next=a.leader?a.price+stepOf(a.price):a.price;
+    if(next<=a.rivalMax && t>=a.nextRivalAt){
+      a.price=next; a.leader='rival'; a.endsAt=Math.max(a.endsAt,t+6000); a.nextRivalAt=t+rnd(900,2600);
+    }
+  }
+  if(t>=a.endsAt) endAuction();
+}
+function endAuction(forfeit){
+  const a=auction; a.done=true;
+  const l=S.lots.find(x=>x.id===a.lotId); S.lots=S.lots.filter(x=>x.id!==a.lotId);
+  if(a.leader==='player' && !forfeit){
+    const car=l.car; car.inspected=true; car.status='stock'; car.paid=a.price;
+    S.money-=a.price; S.stats.bought++; S.cars.push(car);
+    a.result='win'; log(`Achat aux enchères : ${carName(car)} pour ${eur(a.price)}.`);
+  } else {
+    a.result='lose';
+    log(`${carName(l.car)} adjugée à ${a.leader==='rival'?a.rival+' pour '+eur(a.price):'personne'}.`);
+  }
+  commit(); renderModal();
+}
+
+// --- Atelier
+const repairCost=(car,k)=>Math.max(80,r100(model(car.modelId).base*COMPS[k].w*(.95-car.cond[k])*1.6));
+const repairTime=(car,k)=>Math.round((15+70*(.95-car.cond[k]))*1000);
+function startRepair(uid,k){
+  const car=S.cars.find(c=>c.uid===uid); if(!car||car.status!=='stock')return;
+  if(ateliersUsed()>=lvl().ateliers)return toast('Atelier occupé. Attendez la fin du travail en cours.','bad');
+  const cost=repairCost(car,k); if(S.money<cost)return toast('Trésorerie insuffisante.','bad');
+  S.money-=cost; car.spent+=cost; S.stats.spent+=cost;
+  car.status='atelier'; car.job={k,start:now(),endsAt:now()+repairTime(car,k)};
+  toast(`${carName(car)} à l’atelier : ${COMPS[k].label.toLowerCase()}.`); commit();
+}
+
+// --- Ventes
+const defaultAsk=car=>r100(valueOf(car)*1.12);
+function listCar(uid){
+  const car=S.cars.find(c=>c.uid===uid); if(!car||car.status!=='stock')return;
+  const p=parseInt(String(drafts['ask-'+uid]??defaultAsk(car)).replace(/\D/g,''),10);
+  if(!p||p<100)return toast('Indiquez un prix de vente.','bad');
+  car.status='vente'; car.ask=p; delete drafts['ask-'+uid];
+  if(S.nextClientAt<now()+8000)S.nextClientAt=now()+rnd(6000,14000);
+  toast(`${carName(car)} exposée à ${eur(p)}.`); commit();
+}
+function unlist(uid){
+  const car=S.cars.find(c=>c.uid===uid); if(!car)return;
+  car.status='stock'; S.clients=S.clients.filter(c=>c.carUid!==uid); commit();
+}
+function spawnClient(){
+  const cars=onSale(); if(!cars.length||S.clients.length>=3)return;
+  const car=pick(cars), v=valueOf(car), key=pick(Object.keys(PERSONAS)), P=PERSONAS[key];
+  const max=r100(v*rnd(.98,1.22)*(1+S.rep*.004)*P.maxF);
+  const offer=r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
+  S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask),
+    patience:P.patience, patienceMax:P.patience, expiresAt:now()+120000});
+  toast(`Un client est au showroom pour la ${carName(car)}.`);
+}
+const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
+function openNego(id){
+  const c=S.clients.find(x=>x.id===id); if(!c)return;
+  nego={clientId:id, carCache:carOf(c), name:c.name, persona:c.persona,
+    msg:`Elle me plaît, mais à ${eur(carOf(c).ask)} c'est trop. Je vous en propose ${eur(c.offer)}.`, geste:false, done:false};
+  drafts.counter=String(carOf(c).ask); renderModal();
+}
+function negoCounter(){
+  const c=S.clients.find(x=>x.id===nego.clientId); if(!c)return;
+  const p=parseInt(String(drafts.counter||'').replace(/\D/g,''),10);
+  if(!p)return toast('Indiquez un montant.','bad');
+  if(p<=c.max) return sell(c,Math.max(p,c.offer),`Marché conclu à ${eur(Math.max(p,c.offer))}. Je passe signer demain.`);
+  c.patience--;
+  if(c.patience<=0){
+    S.clients=S.clients.filter(x=>x.id!==c.id);
+    if(p>valueOf(carOf(c))*1.45)S.rep=clamp(S.rep-1,0,100);
+    nego.msg=`Non, on n'arrivera pas à s'entendre. Au revoir.`; nego.done=true; nego.result='lost';
+    log(`${c.name} est reparti sans acheter.`); commit(); return renderModal();
+  }
+  c.offer=r100(c.offer+(Math.min(c.max,p)-c.offer)*rnd(.35,.6));
+  nego.msg=pick([`C'est encore trop. Je peux monter à ${eur(c.offer)}.`,`Faites un effort… ${eur(c.offer)}, dernier mot ?`,`Hmm. ${eur(c.offer)}, je ne peux pas faire mieux pour l'instant.`]);
+  commit(); renderModal();
+}
+function negoGeste(){
+  const c=S.clients.find(x=>x.id===nego.clientId); if(!c||nego.geste)return;
+  if(S.money<400)return toast('Trésorerie insuffisante.','bad');
+  const car=carOf(c); S.money-=400; car.spent+=400; S.stats.spent+=400;
+  c.max=r100(c.max+valueOf(car)*.06); nego.geste=true;
+  nego.msg=`Une garantie 6 mois offerte ? Ça me rassure, c'est un vrai plus.`; commit(); renderModal();
+}
+function negoAccept(){const c=S.clients.find(x=>x.id===nego.clientId); if(c)sell(c,c.offer,'Parfait, on fait comme ça.');}
+function negoDismiss(){S.clients=S.clients.filter(x=>x.id!==nego.clientId); nego=null; commit(); renderModal();}
+function sell(c,price,msg){
+  const car=carOf(c), v=valueOf(car), profit=price-car.paid-car.spent;
+  S.money+=price; S.stats.sold++; S.stats.profit+=profit;
+  S.rep=clamp(S.rep+(price>v*1.3?-1:price<=v*1.1?2:1),0,100);
+  if(car.cond.meca<.45) S.returns.push({at:now()+rnd(60000,150000), name:c.name, car:carName(car), refund:r100(price*.12)});
+  S.cars=S.cars.filter(x=>x.uid!==car.uid);
+  S.clients=S.clients.filter(x=>x.id!==c.id&&x.carUid!==car.uid);
+  log(`Vente : ${carName(car)} à ${c.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}).`);
+  Object.assign(nego,{msg,done:true,result:'sold',price,profit});
+  commit(); renderModal();
+}
+
+// --- Progression
+function upgradeReqs(){
+  const u=UPGRADES[S.level+1]; if(!u)return null;
+  return {u, list:[
+    {label:'Trésorerie', need:eur(u.money), ok:S.money>=u.money, have:eur(S.money)},
+    {label:'Réputation', need:u.rep, ok:S.rep>=u.rep, have:S.rep},
+    {label:'Voitures vendues', need:u.sold, ok:S.stats.sold>=u.sold, have:S.stats.sold},
+  ]};
+}
+function upgrade(){
+  const r=upgradeReqs(); if(!r||!r.list.every(x=>x.ok))return;
+  S.money-=r.u.cost; S.level++; log(`Nouveau niveau : ${lvl().name}.`);
+  toast(`Niveau ${S.level} : ${lvl().name}. Berlines, SUV et coupés arrivent aux enchères.`,'good'); commit();
+}
+
+// --- Boucle de temps
+function tick(){
+  const t=now(); let changed=false;
+  S.cars.forEach(car=>{ if(car.status==='atelier'&&t>=car.job.endsAt){
+    car.cond[car.job.k]=.95; car.status='stock';
+    toast(`Atelier terminé : ${carName(car)}, ${COMPS[car.job.k].label.toLowerCase()} remise à neuf.`,'good');
+    delete car.job; changed=true; }});
+  if(S.lots.length<4 && t>=S.nextLotAt){S.lots.push(newLot()); S.nextLotAt=t+rnd(25000,45000); changed=true;}
+  if(onSale().length && t>=S.nextClientAt){spawnClient(); S.nextClientAt=t+rnd(18000,35000); changed=true;}
+  const before=S.clients.length;
+  S.clients=S.clients.filter(c=>(c.expiresAt>t||(nego&&nego.clientId===c.id))&&carOf(c)&&carOf(c).status==='vente');
+  if(S.clients.length!==before)changed=true;
+  S.returns=S.returns.filter(r=>{ if(t<r.at)return true;
+    S.money-=r.refund; S.rep=clamp(S.rep-4,0,100); S.stats.profit-=r.refund;
+    log(`Retour client : ${r.name} signale une panne sur la ${r.car}. Geste de ${eur(r.refund)}.`);
+    toast(`Retour client sur la ${r.car} : −${eur(r.refund)}, réputation en baisse.`,'bad'); changed=true; return false;});
+  auctionTick();
+  if(changed)commit(); else updateLive();
+  if(auction&&!auction.done)renderModal();
+}
+function commit(){save(); render();}
+
+/* =====================================================================
+   4. VISUEL — photos des voitures posées dans le décor
+   ===================================================================== */
+const carName=car=>{const m=model(car.modelId);return `${m.brand} ${m.name}`};
+const imgOf=car=>`voiture-${car.modelId}-${car.color.s}.webp`;
+function stage(car,o={}){
+  const m=model(car.modelId), src=imgOf(car);
+  const dust=car.inspected?clamp((1-car.cond.carro)*.85,0,.75):.2;
+  return `<div class="stage ${o.scene||''}" style="--w:${m.w}%">
+    <div class="car refl" aria-hidden="true"><img src="${src}" alt=""></div>
+    <div class="shade"></div>
+    <div class="car"><img src="${src}" alt="${esc(carName(car)+', '+car.color.n)}" loading="lazy"><i class="dust" style="--m:url('${src}');opacity:${dust.toFixed(2)}"></i></div>
+    ${o.num?`<span class="lotno glass"><small>Lot</small>${o.num}</span>`:o.tagL?`<span class="tag l glass">${o.tagL}</span>`:''}
+    ${o.tagR?`<span class="tag glass">${o.tagR}</span>`:''}
+  </div>`;
+}
+const condColor=v=>v>=.7?'var(--good)':v>=.45?'var(--warn)':'var(--bad)';
+function condsHTML(car){
+  return `<div class="conds">${Object.entries(COMPS).map(([k,c])=>`<div class="cond"><div><span>${c.label}</span><span class="num">${Math.round(car.cond[k]*100)} %</span></div><div class="bar"><i style="width:${car.cond[k]*100}%;background:${condColor(car.cond[k])}"></i></div></div>`).join('')}</div>`;
+}
+function head(car,right){
+  const m=model(car.modelId);
+  return `<div class="title"><h3><span>${m.brand}</span>${m.name}</h3>${right||''}</div>
+  <div class="meta">${car.year} · ${kmf(car.km)} · ${car.color.n}</div>`;
+}
+
+/* =====================================================================
+   5. INTERFACE
+   ===================================================================== */
+const TABS=[['encheres','Enchères'],['stock','Stock'],['atelier','Atelier'],['showroom','Showroom'],['profil','Profil']];
+function render(){
+  document.getElementById('top').innerHTML=`
+    <div class="brand"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
+      <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div>
+    <div class="stats">
+      <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
+      <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
+      <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${lvl().parking}</b></div>
+    </div>`;
+  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${k==='showroom'&&S.clients.length?`<span class="pill">${S.clients.length}</span>`:''}</button>`).join('');
+  document.getElementById('view').innerHTML=({encheres:viewLots,stock:viewStock,atelier:viewAtelier,showroom:viewShowroom,profil:viewProfil})[S.tab]();
+}
+
+function viewLots(){
+  return `<h2>Salle des <em>ventes</em></h2><p class="lead">De nouveaux lots arrivent au fil du temps. Une inspection à 150 € révèle l'état réel. Sans elle, vous enchérissez à l'aveugle.</p>
+  ${S.lots.length?`<div class="grid">${S.lots.map(l=>{const c=l.car;
+    return `<article class="card glass">${stage(c,{num:l.id,tagR:c.inspected?'Inspecté':'Non inspecté'})}
+      <div class="body">${head(c)}
+      ${c.inspected?condsHTML(c)+`<div class="meta">Valeur estimée <b class="num" style="color:var(--fg)">${eur(valueOf(c))}</b></div>`
+        :`<div class="unknown">État inconnu. Valeur entre <b class="num">${eur(valueOf(c,.4))}</b> et <b class="num">${eur(valueOf(c,.9))}</b> selon l'état.</div>`}
+      <div class="row end"><button class="btn main" data-act="bid" data-id="${l.id}">Enchérir <small>dès ${eur(l.start)}</small></button>
+      ${c.inspected?'':`<button class="btn" data-act="inspect" data-id="${l.id}">Inspecter <small>150 €</small></button>`}</div>
+      </div></article>`}).join('')}</div>`
+  :`<div class="empty">Aucun lot pour le moment. Le prochain arrive dans <span class="num" data-ends="${S.nextLotAt}">${mmss(S.nextLotAt-now())}</span>.</div>`}`;
+}
+function viewStock(){
+  if(!S.cars.length)return `<h2>Votre <em>stock</em></h2><div class="empty">Votre parking est vide. Passez par la salle des ventes pour acheter votre première voiture.</div>`;
+  const st={stock:'Sur le parking',atelier:'À l’atelier',vente:'En vente'};
+  return `<h2>Votre <em>stock</em></h2><p class="lead">Fixez un prix et exposez la voiture au showroom, ou passez-la d'abord à l'atelier pour augmenter sa valeur.</p>
+  <div class="grid">${S.cars.map(c=>`<article class="card glass">${stage(c,{tagL:st[c.status],tagR:c.status==='vente'?eur(c.ask):''})}
+    <div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
+    ${condsHTML(c)}
+    <div class="kv"><span>Prix payé et frais</span><b class="num">${eur(c.paid+c.spent)}</b><span>Valeur actuelle</span><b class="num">${eur(valueOf(c))}</b></div>
+    ${c.status==='stock'?`<div class="row end"><label class="field" for="ask-${c.uid}"><input id="ask-${c.uid}" data-draft="ask-${c.uid}" inputmode="numeric" value="${esc(drafts['ask-'+c.uid]??defaultAsk(c))}"><span>€</span></label>
+      <button class="btn main" data-act="list" data-id="${c.uid}">Mettre en vente</button>
+      <button class="btn ghost" data-act="tab" data-id="atelier">Atelier</button></div>`
+    :c.status==='vente'?`<div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div>`
+    :`<div class="row end meta">En réparation, fin dans <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></div>`}
+    </div></article>`).join('')}</div>`;
+}
+function viewAtelier(){
+  const busy=S.cars.filter(c=>c.status==='atelier'), bays=[];
+  for(let i=0;i<lvl().ateliers;i++){const c=busy[i];
+    bays.push(`<div class="bay glass"><div class="lbl"><span>Pont ${i+1}</span>${c?`<b class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</b>`:'<span>Libre</span>'}</div>
+      ${c?`${stage(c,{scene:'atelier'})}<div class="in"><b>${carName(c)}</b><div class="meta">${COMPS[c.job.k].label} en cours</div><div class="progress"><i data-start="${c.job.start}" data-pend="${c.job.endsAt}" style="width:${clamp((now()-c.job.start)/(c.job.endsAt-c.job.start),0,1)*100}%"></i></div></div>`
+      :`<div class="free"><span>Pont libre</span></div>`}</div>`);}
+  const todo=S.cars.filter(c=>c.status==='stock');
+  return `<h2>L'<em>atelier</em></h2><p class="lead">Chaque pont traite une réparation à la fois. Remettre la mécanique à neuf évite les retours clients, la carrosserie fait grimper la valeur.</p>
+  <div class="bays">${bays.join('')}</div>
+  <h2>À préparer</h2>
+  ${todo.length?`<div class="grid">${todo.map(c=>`<article class="card glass">${stage(c)}<div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
+    <div class="repairs">${Object.entries(COMPS).map(([k,x])=>{
+      if(c.cond[k]>=.9)return `<div class="btn" style="opacity:.5;cursor:default"><span>${x.label}</span><small>Bon état · ${Math.round(c.cond[k]*100)} %</small></div>`;
+      const gain=valueOf(c,avgCond({...c.cond,[k]:.95}))-valueOf(c);
+      return `<button class="btn" data-act="repair" data-id="${c.uid}" data-k="${k}"><span>${x.label} <small style="color:${condColor(c.cond[k])}">${Math.round(c.cond[k]*100)} %</small></span><small class="num">${eur(repairCost(c,k))} · ${Math.round(repairTime(c,k)/1000)} s · +${eur(gain)}</small></button>`}).join('')}</div>
+    </div></article>`).join('')}</div>`:`<div class="empty">Aucune voiture disponible sur le parking.</div>`}`;
+}
+function viewShowroom(){
+  const cars=onSale();
+  return `<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.</p>
+  ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c);return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b></small></div>
+    <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span><button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button></div></div>`}).join('')}</div>`
+  :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(S.nextClientAt-now())}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
+  <h2>En <em>exposition</em></h2>
+  ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
+}
+function viewProfil(){
+  const r=upgradeReqs();
+  return `<h2>Votre <em>affaire</em></h2>
+  <div class="cols">
+    <section class="panel glass"><h3>Le garage</h3>
+      <div class="row" style="margin-bottom:16px"><label class="field" for="garageName" style="flex:1"><input id="garageName" data-draft="garageName" style="width:100%" value="${esc(drafts.garageName??S.garage)}" maxlength="32"></label><button class="btn" data-act="rename">Renommer</button></div>
+      <div class="kv">
+        <span>Voitures achetées</span><b class="num">${S.stats.bought}</b>
+        <span>Voitures vendues</span><b class="num">${S.stats.sold}</b>
+        <span>Atelier et frais</span><b class="num">${eur(S.stats.spent)}</b>
+        <span>Marge cumulée</span><b class="num" style="color:${S.stats.profit>=0?'var(--good)':'var(--bad)'}">${eur(S.stats.profit)}</b>
+      </div></section>
+    <section class="panel glass"><h3>${r?`Prochain niveau : ${LEVELS[S.level+1].name}`:'Niveau maximum du prototype'}</h3>
+      ${r?`${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
+      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts, et les berlines, SUV et coupés aux enchères.</p>
+      <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>Agrandir le garage</button>`
+      :`<p class="meta">Les niveaux suivants (multimarque, showroom, concession agréée) arriveront dans la prochaine version.</p>`}
+    </section>
+    <section class="panel glass"><h3>Journal</h3>
+      ${S.log.length?`<ul class="log">${S.log.map(l=>`<li><time>${new Date(l.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="meta">Rien pour l’instant.</p>'}
+    </section>
+  </div>
+  <div class="row" style="margin-top:24px">
+    ${drafts.confirmReset?`<span class="meta">Effacer toute la partie ?</span><button class="btn danger" data-act="reset2">Oui, recommencer</button><button class="btn ghost" data-act="reset0">Annuler</button>`
+    :`<button class="btn ghost danger" data-act="reset1">Recommencer une partie</button>`}
+  </div>`;
+}
+
+function renderModal(){
+  const m=document.getElementById('modal');
+  if(auction){
+    const a=auction, car=a.carCache, left=a.endsAt-now(), next=a.leader?a.price+stepOf(a.price):a.price;
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Enchère">
+      ${stage(car,{num:a.lotId,tagR:a.done?'Adjugé':'En cours'})}
+      <div class="inner">${head(car)}
+      ${a.done?(a.result==='win'?`<div class="quote">Adjugée pour ${eur(a.price)}. Elle vous attend sur le parking.</div>`
+        :`<div class="quote">${a.leader==='rival'?`Adjugée à ${esc(a.rival)} pour ${eur(a.price)}.`:'Aucune offre, le lot est retiré.'}</div>`)
+        +`<div class="row"><button class="btn main" data-act="closeModal">Fermer</button>${a.result==='win'?'<button class="btn" data-act="goStock">Voir le stock</button>':''}</div>`
+      :`<div class="row" style="justify-content:space-between;align-items:flex-end">
+          <div><div class="meta">Enchère actuelle</div><div class="bigprice num">${eur(a.price)}</div></div>
+          <div style="text-align:right"><div class="meta">Clôture</div><div class="timer num ${left<4000?'hot':''}">${mmss(left)}</div></div></div>
+        <div class="leader">${a.leader==='player'?'<b>Vous menez l’enchère.</b>':a.leader==='rival'?`<b>${esc(a.rival)}</b> mène l'enchère.`:'Aucune offre pour l’instant.'}</div>
+        <div class="row"><button class="btn main" data-act="playerBid" ${a.leader==='player'||next>S.money?'disabled':''}>Enchérir à ${eur(next)}</button>
+        <button class="btn ghost" data-act="leaveAuction" ${a.leader==='player'?'disabled':''}>Quitter la salle</button></div>
+        <div class="meta">Trésorerie : ${eur(S.money)}</div>`}
+      </div></div></div>`;
+    return;
+  }
+  if(nego){
+    const c=S.clients.find(x=>x.id===nego.clientId), car=nego.carCache;
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Négociation">
+      <div class="lounge"><div class="who"><small>${PERSONAS[nego.persona].label}</small>${esc(nego.name)}</div></div>
+      <div class="inner">
+      <div class="quote">« ${esc(nego.msg)} »</div>
+      <div class="meta">${carName(car)} · ${car.color.n} · affichée ${eur(car.ask)} · valeur estimée ${eur(valueOf(car))}</div>
+      ${nego.done?(nego.result==='sold'?`<div class="kv"><span>Prix de vente</span><b class="num">${eur(nego.price)}</b><span>Marge</span><b class="num" style="color:${nego.profit>=0?'var(--good)':'var(--bad)'}">${eur(nego.profit)}</b></div>`:'')
+        +`<div class="row"><button class="btn main" data-act="closeModal">Fermer</button></div>`
+      :`<div class="row" style="justify-content:space-between"><span class="meta">Offre du client <b class="num" style="color:var(--fg)">${eur(c.offer)}</b></span>
+          <span class="row"><span class="meta">Patience</span><span class="patience">${Array.from({length:c.patienceMax},(_,i)=>`<i class="${i<c.patience?'on':''}"></i>`).join('')}</span></span></div>
+        <div class="row"><button class="btn main" data-act="negoAccept">Accepter ${eur(c.offer)}</button></div>
+        <div class="row"><label class="field" for="counter"><input id="counter" data-draft="counter" inputmode="numeric" value="${esc(drafts.counter||'')}"><span>€</span></label>
+          <button class="btn" data-act="negoCounter">Contre-proposer</button></div>
+        <div class="row"><button class="btn" data-act="negoGeste" ${nego.geste?'disabled':''}>Offrir une garantie 6 mois <small>400 €</small></button>
+          <button class="btn ghost danger" data-act="negoDismiss">Congédier</button></div>`}
+      </div></div></div>`;
+    return;
+  }
+  m.innerHTML='';
+}
+
+function updateLive(){
+  document.querySelectorAll('[data-ends]').forEach(el=>el.textContent=mmss(+el.dataset.ends-now()));
+  document.querySelectorAll('[data-pend]').forEach(el=>{const s=+el.dataset.start,e=+el.dataset.pend;el.style.width=clamp((now()-s)/(e-s),0,1)*100+'%'});
+}
+function toast(t,kind){
+  const box=document.getElementById('toasts'), el=document.createElement('div');
+  el.className='toast '+(kind||''); el.textContent=t; box.appendChild(el);
+  setTimeout(()=>el.remove(),4200); while(box.children.length>3)box.firstChild.remove();
+}
+
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.draft;if(k)drafts[k]=e.target.value;});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='counter')negoCounter();});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b||b.disabled)return;
+  const id=b.dataset.id, n=+id;
+  switch(b.dataset.act){
+    case 'tab': S.tab=id; save(); render(); break;
+    case 'inspect': inspect(n); break;
+    case 'bid': startAuction(n); break;
+    case 'playerBid': playerBid(); break;
+    case 'leaveAuction': endAuction(true); break;
+    case 'repair': startRepair(n,b.dataset.k); break;
+    case 'list': listCar(n); break;
+    case 'unlist': unlist(n); break;
+    case 'nego': openNego(n); break;
+    case 'negoAccept': negoAccept(); break;
+    case 'negoCounter': negoCounter(); break;
+    case 'negoGeste': negoGeste(); break;
+    case 'negoDismiss': negoDismiss(); break;
+    case 'closeModal': auction=null; nego=null; renderModal(); render(); break;
+    case 'goStock': auction=null; S.tab='stock'; renderModal(); commit(); break;
+    case 'upgrade': upgrade(); break;
+    case 'rename': { const v=(drafts.garageName||'').trim(); if(v){S.garage=v; delete drafts.garageName; commit(); toast('Garage renommé.');} break; }
+    case 'reset1': drafts.confirmReset=true; render(); break;
+    case 'reset0': delete drafts.confirmReset; render(); break;
+    case 'reset2': delete drafts.confirmReset; S=freshState(); seed(); auction=null; nego=null; renderModal(); commit(); break;
+  }
+});
+
+function seed(){ for(let i=0;i<4;i++)S.lots.push(newLot()); S.nextLotAt=now()+30000;
+  log('Ouverture du garage. 15 000 € en caisse et trois places de parking.'); }
+function start(data){
+  S=(data&&data.S)||load();
+  if(!S){S=freshState(); seed();}
+  render(); renderModal();
+  setInterval(tick,1000); setInterval(save,5000);
+}
+window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
