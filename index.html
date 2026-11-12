@@ -35,7 +35,34 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .hero{position:relative;min-height:clamp(260px,38vw,420px);display:flex;align-items:flex-end;
   background:linear-gradient(180deg,rgba(13,10,8,.15) 0%,rgba(13,10,8,.05) 40%,rgba(13,10,8,.92) 100%),url("decor-garage.jpg") center 35%/cover no-repeat,#22170f}
 .hero .wrap{width:100%;display:flex;flex-wrap:wrap;gap:18px 28px;align-items:flex-end;justify-content:space-between;padding-block:28px 26px}
-.brand{min-width:0;flex:1 1 300px}
+.brand{min-width:0;flex:1 1 300px;display:flex;gap:18px;align-items:flex-end}
+.brand .txt{min-width:0}
+.me{flex:none;width:clamp(72px,9vw,104px);aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid var(--amber);box-shadow:0 10px 30px rgba(0,0,0,.6);background:#2a2018}
+.face{flex:none;width:56px;height:56px;border-radius:50%;object-fit:cover;background:#2a2018;border:1px solid var(--edge-strong)}
+.face.sm{width:30px;height:30px}
+.face.lg{width:96px;height:96px}
+.staff{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:8px}
+.emp{border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.emp .top{display:flex;gap:14px;align-items:center;min-width:0}
+.emp .top div{min-width:0}
+.emp .top b{font-family:var(--display);font-weight:400;font-size:24px;line-height:1.05;display:block}
+.emp .role{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.stars{color:var(--amber);letter-spacing:2px;font-size:13px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18)}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:22px}
+.rolecard{border-radius:16px;padding:14px 16px}
+.rolecard h4{margin:0 0 4px;font-size:15px}
+.rolecard p{margin:0;color:var(--muted);font-size:13.5px}
+.rolecard .eff{margin-top:8px;color:var(--fg);font-size:13px;font-weight:600}
+.looks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.looks.many{grid-template-columns:repeat(5,1fr);gap:8px}
+.look{border:2px solid transparent;border-radius:16px;padding:0;background:transparent;overflow:hidden;aspect-ratio:1}
+.look img{width:100%;height:100%;object-fit:cover;display:block;background:#2a2018}
+.look[aria-pressed="true"]{border-color:var(--amber);box-shadow:0 0 0 3px rgba(242,166,90,.25)}
+.payday{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;border-radius:16px;padding:12px 16px;margin-bottom:18px}
+.locked{border-radius:var(--r);padding:26px;text-align:center}
+.locked b{display:block;font-family:var(--display);font-weight:400;font-size:28px;margin-bottom:6px}
+.bay .lbl .who{display:flex;gap:8px;align-items:center;letter-spacing:.08em}
 .brand small{display:block;font-size:11px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
 .brand h1{margin:0;font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(48px,8vw,92px);line-height:.92;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .brand .lvl{margin-top:8px;color:var(--muted);font-size:14px}
@@ -193,8 +220,29 @@ const YEAR = 2026;
 const LEVELS = [null,
   {name:'Terrain vague', parking:3, ateliers:1, tiers:[1]},
   {name:'Petit garage',  parking:5, ateliers:2, tiers:[1,2]},
+  {name:'Garage multimarque', parking:8, ateliers:3, tiers:[1,2], staff:4},
 ];
-const UPGRADES = {2:{cost:25000, money:40000, rep:15, sold:5}};
+const UPGRADES = {2:{cost:25000, money:40000, rep:15, sold:5}, 3:{cost:60000, money:90000, rep:30, sold:15}};
+
+/* Employés : un « mois » de jeu dure 5 minutes, les salaires tombent à chaque fin de mois.
+   Les portraits viennent des fichiers employe-<métier>-<1..4>.png (silhouette tant qu'ils manquent). */
+const MONTH = 5*60*1000;
+const ROLES = {
+  vendeur:{label:'Vendeur', desc:'Reçoit les clients à votre place et conclut les ventes tout seul. Prend 3 % de commission.', base:1800},
+  mecano: {label:'Mécanicien', desc:'Accélère toutes les réparations à l’atelier.', base:2000},
+  prepa:  {label:'Préparateur esthétique', desc:'Nettoie chaque voiture achetée : carrosserie et intérieur gagnent quelques points.', base:1500},
+  accueil:{label:'Réceptionniste', desc:'Fait venir plus de clients et les fait patienter plus longtemps.', base:1400},
+};
+const FIRST = {h:['Lucas','Thomas','Hugo','Julien','Antoine','Romain','Bastien','Théo','Maxime','Nicolas','Ivan','Dmitri','Jack','Ethan','Lukas','Matteo'],
+               f:['Camille','Sarah','Léa','Manon','Chloé','Julie','Pauline','Laura','Elsa','Clara','Anna','Olga','Emily','Chelsea','Sofia','Hanna']};
+const LAST = ['Martin','Bernard','Dubois','Morel','Laurent','Simon','Lefebvre','Mercier','Faure','Girard','Bonnet','Chevalier','Volkov','Petrov','Miller','Walker','Müller','Rossi','Novak','Jansen'];
+// sexe de chaque portrait, dans l'ordre des prompts (1 à 4)
+const LOOK_SEX = {vendeur:['h','f','h','f'], mecano:['h','f','h','h'], prepa:['f','h','h','f'], accueil:['f','h','f','h']};
+const AVATARS = 10;
+const SIL = "data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#2a2018'/><circle cx='50' cy='40' r='17' fill='#5b4a3a'/><path d='M18 96c3-20 16-31 32-31s29 11 32 31z' fill='#5b4a3a'/></svg>");
+const portrait=(src,cls,alt)=>`<img class="${cls}" src="${src}" alt="${esc(alt||'')}" onerror="this.onerror=null;this.src=SIL">`;
+const avatarSrc=n=>`avatar-${String(n).padStart(2,'0')}.webp`;
+const empSrc=(role,look)=>`employe-${role}-${look}.webp`;
 
 // w = largeur de la voiture dans la scène (en %), pour respecter les gabarits
 const MODELS = [
@@ -247,10 +295,18 @@ function freshState(){
   return {v:2, garage:'Garage du Canal', money:15000, rep:5, level:1, uid:1,
     cars:[], lots:[], clients:[], returns:[], log:[],
     nextLotAt:0, nextClientAt:0, tab:'encheres',
-    stats:{bought:0, sold:0, profit:0, spent:0}};
+    stats:{bought:0, sold:0, profit:0, spent:0},
+    avatar:1, staff:[], candidates:[], nextPayAt:0, nextCandAt:0};
+}
+// complète une ancienne sauvegarde avec les nouveaux champs
+function migrate(d){
+  const f=freshState();
+  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt']) if(d[k]===undefined) d[k]=f[k];
+  if(!(d.avatar>=1&&d.avatar<=AVATARS)) d.avatar=1;
+  return d;
 }
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
-function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));if(d&&d.v===2)return d}catch(e){}return null}
+function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));if(d&&d.v===2)return migrate(d)}catch(e){}return null}
 
 const lvl=()=>LEVELS[S.level];
 const avgCond=c=>c.meca*.35+c.carro*.3+c.inter*.2+c.pneus*.15;
@@ -315,6 +371,8 @@ function endAuction(forfeit){
   const l=S.lots.find(x=>x.id===a.lotId); S.lots=S.lots.filter(x=>x.id!==a.lotId);
   if(a.leader==='player' && !forfeit){
     const car=l.car; car.inspected=true; car.status='stock'; car.paid=a.price;
+    const pr=bestSkill('prepa');
+    if(pr){ car.cond.carro=+Math.min(.95,car.cond.carro+.03*pr).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.04*pr).toFixed(2); }
     S.money-=a.price; S.stats.bought++; S.cars.push(car);
     a.result='win'; log(`Achat aux enchères : ${carName(car)} pour ${eur(a.price)}.`);
   } else {
@@ -326,7 +384,7 @@ function endAuction(forfeit){
 
 // --- Atelier
 const repairCost=(car,k)=>Math.max(80,r100(model(car.modelId).base*COMPS[k].w*(.95-car.cond[k])*1.6));
-const repairTime=(car,k)=>Math.round((15+70*(.95-car.cond[k]))*1000);
+const repairTime=(car,k)=>Math.round((15+70*(.95-car.cond[k]))*1000*mecaFactor());
 function startRepair(uid,k){
   const car=S.cars.find(c=>c.uid===uid); if(!car||car.status!=='stock')return;
   if(ateliersUsed()>=lvl().ateliers)return toast('Atelier occupé. Attendez la fin du travail en cours.','bad');
@@ -351,12 +409,12 @@ function unlist(uid){
   car.status='stock'; S.clients=S.clients.filter(c=>c.carUid!==uid); commit();
 }
 function spawnClient(){
-  const cars=onSale(); if(!cars.length||S.clients.length>=3)return;
+  const cars=onSale(); if(!cars.length||S.clients.length>=3+staffOf('accueil').length)return;
   const car=pick(cars), v=valueOf(car), key=pick(Object.keys(PERSONAS)), P=PERSONAS[key];
   const max=r100(v*rnd(.98,1.22)*(1+S.rep*.004)*P.maxF);
   const offer=r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
   S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask),
-    patience:P.patience, patienceMax:P.patience, expiresAt:now()+120000});
+    patience:P.patience, patienceMax:P.patience, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil')});
   toast(`Un client est au showroom pour la ${carName(car)}.`);
 }
 const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
@@ -415,7 +473,83 @@ function upgradeReqs(){
 function upgrade(){
   const r=upgradeReqs(); if(!r||!r.list.every(x=>x.ok))return;
   S.money-=r.u.cost; S.level++; log(`Nouveau niveau : ${lvl().name}.`);
-  toast(`Niveau ${S.level} : ${lvl().name}. Berlines, SUV et coupés arrivent aux enchères.`,'good'); commit();
+  toast(S.level===2?`Niveau 2 : ${lvl().name}. Berlines, SUV et coupés arrivent aux enchères.`:`Niveau ${S.level} : ${lvl().name}. Vous pouvez recruter une équipe.`,'good');
+  if(staffSlots())refreshCandidates();
+  commit();
+}
+
+// --- Employés
+const staffOf=r=>S.staff.filter(e=>e.role===r);
+const skillSum=r=>staffOf(r).reduce((a,e)=>a+e.skill,0);
+const bestSkill=r=>staffOf(r).reduce((a,e)=>Math.max(a,e.skill),0);
+const mecaFactor=()=>Math.max(.4,1/(1+.12*skillSum('mecano')));
+const payroll=()=>S.staff.reduce((a,e)=>a+e.salary,0);
+const staffSlots=()=>lvl().staff||0;
+function newCandidate(role){
+  const look=ri(1,4), sex=LOOK_SEX[role][look-1], skill=clamp(Math.round(rnd(.6,5.4)),1,5);
+  const salary=Math.round(ROLES[role].base*(.7+.15*skill)*rnd(.95,1.05)/50)*50;
+  return {id:S.uid++, role, look, skill, salary, name:`${pick(FIRST[sex])} ${pick(LAST)}`};
+}
+// prénom adapté si l'apparence choisie est d'un autre sexe que celle d'origine
+function nameFor(c,look){
+  if(look===c.look||LOOK_SEX[c.role][look-1]===LOOK_SEX[c.role][c.look-1])return c.name;
+  const seed=c.id%FIRST.h.length, first=FIRST[LOOK_SEX[c.role][look-1]][seed];
+  return first+' '+c.name.split(' ').slice(1).join(' ');
+}
+function refreshCandidates(){
+  S.candidates=Object.keys(ROLES).flatMap(r=>[newCandidate(r),newCandidate(r)]);
+  S.nextCandAt=now()+MONTH;
+}
+function hire(id){
+  const c=S.candidates.find(x=>x.id===id); if(!c)return;
+  if(S.staff.length>=staffSlots())return toast('Équipe complète pour ce niveau.','bad');
+  const fee=Math.round(c.salary*.5);
+  if(S.money<fee)return toast(`Il faut ${eur(fee)} pour la prime d'embauche.`,'bad');
+  S.money-=fee; S.stats.spent+=fee;
+  const look=drafts.look??c.look; delete drafts.look;
+  const name=nameFor(c,look);
+  S.staff.push({...c, look, name, hiredAt:now(), busyUntil:0, sales:0});
+  S.candidates=S.candidates.filter(x=>x.id!==id);
+  if(!S.nextPayAt)S.nextPayAt=now()+MONTH;
+  log(`Embauche : ${name}, ${ROLES[c.role].label.toLowerCase()}, ${eur(c.salary)} par mois.`);
+  toast(`${name} rejoint l'équipe.`,'good'); hiring=null; renderModal(); commit();
+}
+function fire(id){
+  const e=S.staff.find(x=>x.id===id); if(!e)return;
+  S.money-=e.salary; S.stats.spent+=e.salary;
+  S.staff=S.staff.filter(x=>x.id!==id); delete drafts.confirmFire;
+  log(`Départ : ${e.name} quitte le garage (indemnité ${eur(e.salary)}).`);
+  toast(`${e.name} a quitté le garage.`); commit();
+}
+function staffTick(t){
+  let changed=false;
+  if(staffSlots() && (t>=S.nextCandAt || !S.candidates.length)){ refreshCandidates(); changed=true; }
+  if(S.staff.length && S.nextPayAt && t>=S.nextPayAt){
+    const p=payroll(); S.money-=p; S.stats.spent+=p; S.nextPayAt=t+MONTH;
+    log(`Salaires du mois versés : ${eur(p)}.`);
+    toast(S.money<0?`Salaires versés (${eur(p)}). Votre trésorerie est dans le rouge.`:`Salaires du mois versés : ${eur(p)}.`, S.money<0?'bad':'');
+    changed=true;
+  }
+  // un vendeur libre prend en charge un client qui attend depuis plus de 20 s
+  for(const v of staffOf('vendeur')){
+    if(v.busyUntil>t)continue;
+    const c=S.clients.find(c=>t-(c.arrivedAt||0)>20000 && !(nego&&nego.clientId===c.id));
+    if(!c)break;
+    const car=carOf(c); if(!car)continue;
+    const price=r100(Math.min(car.ask, c.offer+(c.max-c.offer)*(.25+.13*v.skill)));
+    const fee=r100(price*.03);
+    const v0=valueOf(car), profit=price-car.paid-car.spent-fee;
+    S.money+=price-fee; S.stats.sold++; S.stats.profit+=profit; v.sales++;
+    S.rep=clamp(S.rep+(price>v0*1.3?-1:price<=v0*1.1?2:1),0,100);
+    if(car.cond.meca<.45) S.returns.push({at:t+rnd(60000,150000), name:c.name, car:carName(car), refund:r100(price*.12)});
+    S.cars=S.cars.filter(x=>x.uid!==car.uid);
+    S.clients=S.clients.filter(x=>x.carUid!==car.uid);
+    v.busyUntil=t+40000-5000*v.skill;
+    log(`${v.name} a vendu la ${carName(car)} à ${c.name} pour ${eur(price)} (commission ${eur(fee)}).`);
+    toast(`${v.name.split(' ')[0]} a vendu la ${carName(car)} pour ${eur(price)}.`,'good');
+    changed=true;
+  }
+  return changed;
 }
 
 // --- Boucle de temps
@@ -426,7 +560,8 @@ function tick(){
     toast(`Atelier terminé : ${carName(car)}, ${COMPS[car.job.k].label.toLowerCase()} remise à neuf.`,'good');
     delete car.job; changed=true; }});
   if(S.lots.length<4 && t>=S.nextLotAt){S.lots.push(newLot()); S.nextLotAt=t+rnd(25000,45000); changed=true;}
-  if(onSale().length && t>=S.nextClientAt){spawnClient(); S.nextClientAt=t+rnd(18000,35000); changed=true;}
+  if(onSale().length && t>=S.nextClientAt){spawnClient(); S.nextClientAt=t+rnd(18000,35000)/(1+.12*skillSum('accueil')); changed=true;}
+  if(staffTick(t)) changed=true;
   const before=S.clients.length;
   S.clients=S.clients.filter(c=>(c.expiresAt>t||(nego&&nego.clientId===c.id))&&carOf(c)&&carOf(c).status==='vente');
   if(S.clients.length!==before)changed=true;
@@ -469,18 +604,19 @@ function head(car,right){
 /* =====================================================================
    5. INTERFACE
    ===================================================================== */
-const TABS=[['encheres','Enchères'],['stock','Stock'],['atelier','Atelier'],['showroom','Showroom'],['profil','Profil']];
+const TABS=[['encheres','Enchères'],['stock','Stock'],['atelier','Atelier'],['showroom','Showroom'],['equipe','Équipe'],['profil','Profil']];
+let hiring=null;
 function render(){
   document.getElementById('top').innerHTML=`
-    <div class="brand"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
-      <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div>
+    <div class="brand">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}<div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
+      <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div></div>
     <div class="stats">
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
       <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${lvl().parking}</b></div>
     </div>`;
   document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${k==='showroom'&&S.clients.length?`<span class="pill">${S.clients.length}</span>`:''}</button>`).join('');
-  document.getElementById('view').innerHTML=({encheres:viewLots,stock:viewStock,atelier:viewAtelier,showroom:viewShowroom,profil:viewProfil})[S.tab]();
+  document.getElementById('view').innerHTML=({encheres:viewLots,stock:viewStock,atelier:viewAtelier,showroom:viewShowroom,equipe:viewEquipe,profil:viewProfil})[S.tab]();
 }
 
 function viewLots(){
@@ -513,11 +649,12 @@ function viewStock(){
 function viewAtelier(){
   const busy=S.cars.filter(c=>c.status==='atelier'), bays=[];
   for(let i=0;i<lvl().ateliers;i++){const c=busy[i];
-    bays.push(`<div class="bay glass"><div class="lbl"><span>Pont ${i+1}</span>${c?`<b class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</b>`:'<span>Libre</span>'}</div>
+    const mec=staffOf('mecano')[i];
+    bays.push(`<div class="bay glass"><div class="lbl"><span class="who">${mec?portrait(empSrc('mecano',mec.look),'face sm',mec.name):''}Pont ${i+1}</span>${c?`<b class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</b>`:'<span>Libre</span>'}</div>
       ${c?`${stage(c,{scene:'atelier'})}<div class="in"><b>${carName(c)}</b><div class="meta">${COMPS[c.job.k].label} en cours</div><div class="progress"><i data-start="${c.job.start}" data-pend="${c.job.endsAt}" style="width:${clamp((now()-c.job.start)/(c.job.endsAt-c.job.start),0,1)*100}%"></i></div></div>`
       :`<div class="free"><span>Pont libre</span></div>`}</div>`);}
   const todo=S.cars.filter(c=>c.status==='stock');
-  return `<h2>L'<em>atelier</em></h2><p class="lead">Chaque pont traite une réparation à la fois. Remettre la mécanique à neuf évite les retours clients, la carrosserie fait grimper la valeur.</p>
+  return `<h2>L'<em>atelier</em></h2><p class="lead">Chaque pont traite une réparation à la fois. Remettre la mécanique à neuf évite les retours clients, la carrosserie fait grimper la valeur.${staffOf('mecano').length?` Vos mécaniciens réduisent les délais de ${Math.round((1-mecaFactor())*100)} %.`:''}</p>
   <div class="bays">${bays.join('')}</div>
   <h2>À préparer</h2>
   ${todo.length?`<div class="grid">${todo.map(c=>`<article class="card glass">${stage(c)}<div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
@@ -530,16 +667,48 @@ function viewAtelier(){
 function viewShowroom(){
   const cars=onSale();
   return `<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.</p>
+  ${staffOf('vendeur').length?`<p class="meta" style="margin:-8px 0 16px">Vos vendeurs prennent en charge les clients qui attendent plus de 20 secondes.</p>`:''}
   ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c);return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b></small></div>
     <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span><button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button></div></div>`}).join('')}</div>`
   :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(S.nextClientAt-now())}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
   <h2>En <em>exposition</em></h2>
   ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
 }
+function stars(n){return `<span class="stars" aria-label="${n} sur 5">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`}
+function roleEffect(r){
+  if(!staffOf(r).length)return 'Personne à ce poste';
+  return {vendeur:`${staffOf('vendeur').length} vendeur${staffOf('vendeur').length>1?'s':''} au showroom`,
+    mecano:`Réparations ${Math.round((1-mecaFactor())*100)} % plus rapides`,
+    prepa:`+${bestSkill('prepa')*3} pts carrosserie, +${bestSkill('prepa')*4} pts intérieur à l'achat`,
+    accueil:`+${staffOf('accueil').length} client${staffOf('accueil').length>1?'s':''} simultané, patience +${skillSum('accueil')*30} s`}[r];
+}
+function viewEquipe(){
+  if(!staffSlots()){
+    const r=upgradeReqs();
+    return `<h2>Votre <em>équipe</em></h2><div class="locked glass"><b>Disponible au niveau 3</b><p class="meta">Agrandissez jusqu'au garage multimarque pour recruter vendeurs, mécaniciens, préparateurs et réceptionnistes.${r&&S.level===2?' Les conditions sont dans l’onglet Profil.':''}</p></div>`;
+  }
+  return `<h2>Votre <em>équipe</em></h2><p class="lead">Chaque employé travaille pour vous en continu. Les salaires tombent à la fin de chaque mois de jeu (5 minutes).</p>
+  <div class="payday glass"><span><b class="num">${S.staff.length} / ${staffSlots()}</b> <span class="meta">postes occupés</span></span>
+    <span><span class="meta">Masse salariale</span> <b class="num">${eur(payroll())}</b> <span class="meta">/ mois</span></span>
+    <span><span class="meta">Prochaine paie</span> <b class="num">${S.staff.length&&S.nextPayAt?`<span data-ends="${S.nextPayAt}">${mmss(S.nextPayAt-now())}</span>`:'—'}</b></span></div>
+  <div class="roles">${Object.entries(ROLES).map(([k,r])=>`<div class="rolecard glass"><h4>${r.label}</h4><p>${r.desc}</p><div class="eff">${roleEffect(k)}</div></div>`).join('')}</div>
+  ${S.staff.length?`<div class="staff">${S.staff.map(e=>`<div class="emp glass"><div class="top">${portrait(empSrc(e.role,e.look),'face',e.name)}<div><span class="role">${ROLES[e.role].label}</span><b>${esc(e.name)}</b>${stars(e.skill)}</div></div>
+    <div class="kv"><span>Salaire</span><b class="num">${eur(e.salary)} / mois</b>${e.role==='vendeur'?`<span>Ventes conclues</span><b class="num">${e.sales}</b>`:''}</div>
+    <div class="row">${drafts.confirmFire===e.id?`<span class="meta">Indemnité de ${eur(e.salary)}.</span><button class="btn danger" data-act="fire" data-id="${e.id}">Confirmer</button><button class="btn ghost" data-act="fire0">Annuler</button>`
+      :`<button class="btn ghost danger" data-act="fire1" data-id="${e.id}">Licencier</button>`}</div></div>`).join('')}</div>`
+    :`<div class="empty" style="margin-bottom:8px">Personne pour l'instant. Choisissez parmi les candidatures ci-dessous.</div>`}
+  <h2>Candidatures</h2><p class="lead">De nouveaux profils arrivent chaque mois, dans <span class="num" data-ends="${S.nextCandAt}">${mmss(S.nextCandAt-now())}</span>. L'embauche coûte une prime d'un demi-salaire.</p>
+  <div class="staff">${S.candidates.map(c=>`<div class="emp glass"><div class="top">${portrait(empSrc(c.role,c.look),'face',c.name)}<div><span class="role">${ROLES[c.role].label}</span><b>${esc(c.name)}</b>${stars(c.skill)}</div></div>
+    <div class="kv"><span>Salaire demandé</span><b class="num">${eur(c.salary)} / mois</b><span>Prime d'embauche</span><b class="num">${eur(Math.round(c.salary*.5))}</b></div>
+    <div class="row"><button class="btn main" data-act="hireOpen" data-id="${c.id}" ${S.staff.length>=staffSlots()?'disabled':''}>Recruter</button></div></div>`).join('')}</div>`;
+}
 function viewProfil(){
   const r=upgradeReqs();
   return `<h2>Votre <em>affaire</em></h2>
   <div class="cols">
+    <section class="panel glass"><h3>Votre avatar</h3>
+      <div class="looks many">${Array.from({length:AVATARS},(_,i)=>`<button class="look" data-act="avatar" data-id="${i+1}" aria-pressed="${S.avatar===i+1}" aria-label="Avatar ${i+1}"><img src="${avatarSrc(i+1)}" alt="" onerror="this.onerror=null;this.src=SIL"></button>`).join('')}</div>
+    </section>
     <section class="panel glass"><h3>Le garage</h3>
       <div class="row" style="margin-bottom:16px"><label class="field" for="garageName" style="flex:1"><input id="garageName" data-draft="garageName" style="width:100%" value="${esc(drafts.garageName??S.garage)}" maxlength="32"></label><button class="btn" data-act="rename">Renommer</button></div>
       <div class="kv">
@@ -550,9 +719,9 @@ function viewProfil(){
       </div></section>
     <section class="panel glass"><h3>${r?`Prochain niveau : ${LEVELS[S.level+1].name}`:'Niveau maximum du prototype'}</h3>
       ${r?`${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
-      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts, et les berlines, SUV et coupés aux enchères.</p>
+      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts${S.level+1===2?', et les berlines, SUV et coupés aux enchères':', et le recrutement de '+LEVELS[S.level+1].staff+' employés'}.</p>
       <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>Agrandir le garage</button>`
-      :`<p class="meta">Les niveaux suivants (multimarque, showroom, concession agréée) arriveront dans la prochaine version.</p>`}
+      :`<p class="meta">Les niveaux suivants (showroom, concession agréée, concession de luxe) arriveront dans les prochaines versions.</p>`}
     </section>
     <section class="panel glass"><h3>Journal</h3>
       ${S.log.length?`<ul class="log">${S.log.map(l=>`<li><time>${new Date(l.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="meta">Rien pour l’instant.</p>'}
@@ -582,6 +751,20 @@ function renderModal(){
         <button class="btn ghost" data-act="leaveAuction" ${a.leader==='player'?'disabled':''}>Quitter la salle</button></div>
         <div class="meta">Trésorerie : ${eur(S.money)}</div>`}
       </div></div></div>`;
+    return;
+  }
+  if(hiring){
+    const c=S.candidates.find(x=>x.id===hiring);
+    if(!c){hiring=null; m.innerHTML=''; return;}
+    const sel=drafts.look??c.look, fee=Math.round(c.salary*.5);
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Recrutement"><div class="inner">
+      <div class="row" style="gap:16px">${portrait(empSrc(c.role,sel),'face lg',c.name)}<div><span class="role" style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)">${ROLES[c.role].label}</span>
+        <div class="quote" style="font-style:normal">${esc(nameFor(c,sel))}</div>${stars(c.skill)}</div></div>
+      <div><div class="meta" style="margin-bottom:8px">Choisissez son apparence</div>
+        <div class="looks">${[1,2,3,4].map(n=>`<button class="look" data-act="look" data-id="${n}" aria-pressed="${sel===n}" aria-label="Apparence ${n}"><img src="${empSrc(c.role,n)}" alt="" onerror="this.onerror=null;this.src=SIL"></button>`).join('')}</div></div>
+      <div class="kv"><span>Salaire</span><b class="num">${eur(c.salary)} / mois</b><span>Prime d'embauche</span><b class="num">${eur(fee)}</b></div>
+      <div class="row"><button class="btn main" data-act="hire" data-id="${c.id}" ${S.money<fee?'disabled':''}>Embaucher</button><button class="btn ghost" data-act="hireClose">Annuler</button></div>
+    </div></div></div>`;
     return;
   }
   if(nego){
@@ -641,7 +824,15 @@ document.addEventListener('click',e=>{
     case 'rename': { const v=(drafts.garageName||'').trim(); if(v){S.garage=v; delete drafts.garageName; commit(); toast('Garage renommé.');} break; }
     case 'reset1': drafts.confirmReset=true; render(); break;
     case 'reset0': delete drafts.confirmReset; render(); break;
-    case 'reset2': delete drafts.confirmReset; S=freshState(); seed(); auction=null; nego=null; renderModal(); commit(); break;
+    case 'avatar': S.avatar=n; commit(); break;
+    case 'hireOpen': hiring=n; delete drafts.look; renderModal(); break;
+    case 'hireClose': hiring=null; delete drafts.look; renderModal(); break;
+    case 'look': drafts.look=n; renderModal(); break;
+    case 'hire': hire(n); break;
+    case 'fire1': drafts.confirmFire=n; render(); break;
+    case 'fire0': delete drafts.confirmFire; render(); break;
+    case 'fire': fire(n); break;
+    case 'reset2': delete drafts.confirmReset; S=freshState(); seed(); auction=null; nego=null; hiring=null; renderModal(); commit(); break;
   }
 });
 
