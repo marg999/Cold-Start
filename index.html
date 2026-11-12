@@ -63,6 +63,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .locked{border-radius:var(--r);padding:26px;text-align:center}
 .locked b{display:block;font-family:var(--display);font-weight:400;font-size:28px;margin-bottom:6px}
 .bay .lbl .who{display:flex;gap:8px;align-items:center;letter-spacing:.08em}
+.market{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;border-radius:16px;padding:12px 18px;margin-top:6px}
+.market>div{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;min-width:0}
+.market .next{margin-left:auto}
+.market .lbl{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.market b{font-weight:600}
+.chip{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--edge-strong)}
+.chip.up{color:var(--good);border-color:rgba(143,194,141,.4)}
+.chip.down{color:var(--bad);border-color:rgba(236,122,100,.4)}
+.unknown.warn{border-color:rgba(236,122,100,.5);color:var(--bad)}
+.unknown.ok{border-color:rgba(143,194,141,.4);color:var(--good)}
+.tradein .card{box-shadow:none}
 .brand small{display:block;font-size:11px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
 .brand h1{margin:0;font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(48px,8vw,92px);line-height:.92;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .brand .lvl{margin-top:8px;color:var(--muted);font-size:14px}
@@ -246,22 +257,50 @@ const empSrc=(role,look)=>`employe-${role}-${look}.webp`;
 
 // w = largeur de la voiture dans la scène (en %), pour respecter les gabarits
 const MODELS = [
-  {id:'piccola', brand:'Ferrano',   name:'Piccola',  tier:1, base:13500, w:50, colors:[['creme','Blanc crème'],['jaune','Jaune soleil'],['rouge','Rouge vif']]},
-  {id:'lumo',    brand:'Arvane',    name:'Lumo',     tier:1, base:15500, w:56, colors:[['vert','Vert anglais'],['creme','Blanc crème'],['gulf','Bleu Gulf']]},
-  {id:'kesta',   brand:'Volkner',   name:'Kesta',    tier:1, base:22500, w:62, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['argent','Argent']]},
-  {id:'sereno',  brand:'Maurel',    name:'Sereno',   tier:1, base:24000, w:68, colors:[['argent','Argent'],['olive','Vert olive'],['noir','Noir verni']]},
-  {id:'ostra',   brand:'Volkner',   name:'Ostra',    tier:2, base:39000, w:74, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['vert','Vert anglais']]},
-  {id:'atlas',   brand:'Maurel',    name:'Atlas',    tier:2, base:36000, w:66, colors:[['argent','Argent'],['olive','Vert olive'],['rouge','Rouge grenat']]},
-  {id:'ridge',   brand:'Kaiden',    name:'Ridge',    tier:2, base:43000, w:68, colors:[['ardoise','Gris ardoise'],['creme','Blanc crème'],['orange','Orange cuivré']]},
-  {id:'v4',      brand:'Halvorsen', name:'V4 Coupé', tier:2, base:56000, w:70, colors:[['argent','Argent'],['jaune','Jaune course'],['orange','Orange course']]},
+  {id:'piccola', brand:'Ferrano',   name:'Piccola',  type:'citadine', tier:1, base:13500, w:50, colors:[['creme','Blanc crème'],['jaune','Jaune soleil'],['rouge','Rouge vif']]},
+  {id:'lumo',    brand:'Arvane',    name:'Lumo',     type:'citadine', tier:1, base:15500, w:56, colors:[['vert','Vert anglais'],['creme','Blanc crème'],['gulf','Bleu Gulf']]},
+  {id:'kesta',   brand:'Volkner',   name:'Kesta',    type:'compacte', tier:1, base:22500, w:62, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['argent','Argent']]},
+  {id:'sereno',  brand:'Maurel',    name:'Sereno',   type:'berline', tier:1, base:24000, w:68, colors:[['argent','Argent'],['olive','Vert olive'],['noir','Noir verni']]},
+  {id:'ostra',   brand:'Volkner',   name:'Ostra',    type:'berline', tier:2, base:39000, w:74, colors:[['noir','Noir verni'],['ardoise','Gris ardoise'],['vert','Vert anglais']]},
+  {id:'atlas',   brand:'Maurel',    name:'Atlas',    type:'suv', tier:2, base:36000, w:66, colors:[['argent','Argent'],['olive','Vert olive'],['rouge','Rouge grenat']]},
+  {id:'ridge',   brand:'Kaiden',    name:'Ridge',    type:'suv', tier:2, base:43000, w:68, colors:[['ardoise','Gris ardoise'],['creme','Blanc crème'],['orange','Orange cuivré']]},
+  {id:'v4',      brand:'Halvorsen', name:'V4 Coupé', type:'coupe', tier:2, base:56000, w:70, colors:[['argent','Argent'],['jaune','Jaune course'],['orange','Orange course']]},
 ];
 const CLIENT_NAMES = ['M. Bertin','Mme Lefèvre','M. Haddad','Mme Rossi','M. Petit','Mme Diallo','M. Garnier','Mme Moreau','M. Lambert','Mme Chevalier','M. Roux','Mme Fontaine','M. Nguyen','Mme Girard'];
 const RIVALS = ['Garage Martin','Auto Prestige 93','Occasions Leroy','M. Faure, marchand','Car Center Nord'];
 const PERSONAS = {
-  negociateur:{label:'Négociateur', maxF:.93, offerF:.76, patience:4},
-  presse:     {label:'Pressé',       maxF:1.00,offerF:.90, patience:2},
-  indecis:    {label:'Indécis',      maxF:.97, offerF:.84, patience:3},
+  decide:     {label:'Décidé',      maxF:1.06, offerF:1,   patience:2, w:40},
+  negociateur:{label:'Négociateur', maxF:.98, offerF:.80, patience:4, w:22},
+  presse:     {label:'Pressé',      maxF:1.02, offerF:.92, patience:2, w:18},
+  indecis:    {label:'Indécis',     maxF:1.00, offerF:.86, patience:3, w:20},
 };
+function pickPersona(){let r=Math.random()*100;for(const[k,p]of Object.entries(PERSONAS)){if((r-=p.w)<0)return k}return 'indecis'}
+
+/* Marché : une saison par mois de jeu, et parfois un événement qui fait bouger la cote d'un type de voiture */
+const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés'};
+const SEASONS=[
+  {name:'Printemps', fx:{coupe:.12, citadine:.04}},
+  {name:'Été',       fx:{coupe:.08, citadine:.06, suv:-.05}},
+  {name:'Automne',   fx:{berline:.06, compacte:.04}},
+  {name:'Hiver',     fx:{suv:.12, coupe:-.08}},
+];
+const EVENTS=[
+  {name:'Pénurie de puces', text:'Les voitures neuves manquent, l\'occasion grimpe partout.', fx:{all:.10}},
+  {name:'Nouvelle taxe sur les gros véhicules', text:'Les SUV deviennent moins désirables.', fx:{suv:-.15}},
+  {name:'Flambée des prix du carburant', text:'Tout le monde cherche une petite voiture.', fx:{citadine:.14, compacte:.06, suv:-.08}},
+  {name:'Salon de l\'automobile', text:'Les coupés ont la cote cette saison.', fx:{coupe:.15}},
+  {name:'Prime à la conversion', text:'Les familles changent de berline.', fx:{berline:.10}},
+  {name:'Ralentissement économique', text:'Les acheteurs serrent leur budget.', fx:{all:-.08}},
+];
+function marketFx(type){
+  const se=SEASONS[S.monthIdx%4].fx, ev=S.event?EVENTS[S.event-1].fx:{};
+  return 1+(se[type]||0)+(ev[type]||0)+(ev.all||0);
+}
+function fxList(){
+  const out=[], add=(fx)=>{for(const[k,v]of Object.entries(fx))out.push(`${k==='all'?'toutes':TYPE_LABEL[k]} ${v>0?'+':'−'}${Math.round(Math.abs(v)*100)} %`)};
+  return out;
+}
+
 const COMPS = {
   meca: {label:'Mécanique',  w:.10},
   carro:{label:'Carrosserie',w:.08},
@@ -296,12 +335,14 @@ function freshState(){
     cars:[], lots:[], clients:[], returns:[], log:[],
     nextLotAt:0, nextClientAt:0, tab:'encheres',
     stats:{bought:0, sold:0, profit:0, spent:0},
-    avatar:1, staff:[], candidates:[], nextPayAt:0, nextCandAt:0};
+    avatar:1, staff:[], candidates:[], nextPayAt:0, nextCandAt:0,
+    ads:[], nextAdAt:0, monthIdx:0, nextMonthAt:0, event:0};
 }
 // complète une ancienne sauvegarde avec les nouveaux champs
 function migrate(d){
   const f=freshState();
-  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt']) if(d[k]===undefined) d[k]=f[k];
+  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event']) if(d[k]===undefined) d[k]=f[k];
+  (d.clients||[]).forEach(c=>{if(!PERSONAS[c.persona])c.persona='indecis'});
   if(!(d.avatar>=1&&d.avatar<=AVATARS)) d.avatar=1;
   return d;
 }
@@ -314,7 +355,7 @@ function valueOf(car,cond){
   const m=model(car.modelId), age=Math.max(0,YEAR-car.year);
   const a=Math.pow(.885,age), k=Math.max(.35,1-car.km/320000);
   const cf=.4+.6*(cond ?? avgCond(car.cond));
-  return r100(m.base*a*k*cf);
+  return r100(m.base*a*k*cf*(S?marketFx(m.type):1));
 }
 function newCar(tier){
   const m=pick(MODELS.filter(x=>x.tier===tier));
@@ -410,12 +451,26 @@ function unlist(uid){
 }
 function spawnClient(){
   const cars=onSale(); if(!cars.length||S.clients.length>=3+staffOf('accueil').length)return;
-  const car=pick(cars), v=valueOf(car), key=pick(Object.keys(PERSONAS)), P=PERSONAS[key];
-  const max=r100(v*rnd(.98,1.22)*(1+S.rep*.004)*P.maxF);
-  const offer=r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
-  S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask),
+  const car=pick(cars), v=valueOf(car); let key=pickPersona(), P=PERSONAS[key];
+  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF);
+  // un acheteur décidé paie le prix affiché s'il rentre dans son budget, sinon il négocie
+  if(key==='decide' && car.ask>max){ key='indecis'; P=PERSONAS.indecis; }
+  const offer=key==='decide'?car.ask:r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
+  const trade=Math.random()<.3?newTrade():null;
+  S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
     patience:P.patience, patienceMax:P.patience, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil')});
-  toast(`Un client est au showroom pour la ${carName(car)}.`);
+  toast(key==='decide'?`Un client veut la ${carName(car)} au prix affiché.`:`Un client est au showroom pour la ${carName(car)}.`);
+}
+// voiture qu'un client propose de laisser en reprise
+function newTrade(){
+  const tiers=lvl().tiers, car=newCar(pick(tiers)); car.inspected=true; car.status='stock';
+  return {car, price:r100(valueOf(car)*rnd(.82,1.18))};
+}
+function buyDirect(id){
+  const c=S.clients.find(x=>x.id===id); if(!c)return;
+  const car=carOf(c);
+  nego={clientId:id, carCache:car, name:c.name, persona:c.persona, msg:'', geste:false, done:false};
+  sell(c, car.ask, `Elle est parfaite, je la prends au prix affiché.`);
 }
 const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
 function openNego(id){
@@ -457,8 +512,68 @@ function sell(c,price,msg){
   S.cars=S.cars.filter(x=>x.uid!==car.uid);
   S.clients=S.clients.filter(x=>x.id!==c.id&&x.carUid!==car.uid);
   log(`Vente : ${carName(car)} à ${c.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}).`);
-  Object.assign(nego,{msg,done:true,result:'sold',price,profit});
+  Object.assign(nego,{msg,done:true,result:'sold',price,profit,trade:c.trade||null});
   commit(); renderModal();
+}
+function tradeAccept(){
+  const t=nego&&nego.trade; if(!t)return;
+  if(parkingUsed()>=lvl().parking)return toast('Parking plein : impossible de reprendre la voiture.','bad');
+  if(S.money<t.price)return toast('Trésorerie insuffisante pour cette reprise.','bad');
+  S.money-=t.price; t.car.paid=t.price; t.car.uid=S.uid++; S.cars.push(t.car); S.stats.bought++;
+  log(`Reprise : ${carName(t.car)} de ${nego.name} pour ${eur(t.price)}.`);
+  toast(`${carName(t.car)} reprise et garée sur le parking.`,'good');
+  nego.trade=null; nego.tradeDone='ok'; commit(); renderModal();
+}
+function tradeRefuse(){ if(!nego)return; nego.trade=null; nego.tradeDone='no'; renderModal(); }
+
+// --- Annonces de particuliers : prix bas, mais une sur quatre cache un défaut
+function newAd(){
+  const car=newCar(pick(lvl().tiers)); car.inspected=true; car.status='stock';
+  const real=JSON.parse(JSON.stringify(car));
+  const r=Math.random(); let scam=null;
+  if(r<.13){ scam='km'; real.km=car.km+Math.round(rnd(60000,120000)/1000)*1000; }
+  else if(r<.25){ scam='accident'; real.cond.carro=+Math.max(.1,car.cond.carro-rnd(.35,.55)).toFixed(2); real.cond.meca=+Math.max(.1,car.cond.meca-rnd(.15,.3)).toFixed(2); }
+  return {id:car.uid, car, real, scam, checked:false, price:r100(valueOf(car)*rnd(.62,.84)), seller:pick(CLIENT_NAMES), expiresAt:now()+rnd(150000,240000)};
+}
+function adInspect(id){
+  const a=S.ads.find(x=>x.id===id); if(!a||a.checked)return;
+  if(S.money<150)return toast('Pas assez de trésorerie pour l’inspection.','bad');
+  S.money-=150; S.stats.spent+=150; a.checked=true;
+  if(a.scam){ a.car=JSON.parse(JSON.stringify(a.real)); toast(a.scam==='km'?'Inspection : le compteur a été trafiqué.':'Inspection : la voiture a été accidentée.','bad'); }
+  else toast('Inspection : rien à signaler, l’annonce est honnête.','good');
+  commit();
+}
+function adBuy(id){
+  const a=S.ads.find(x=>x.id===id); if(!a)return;
+  if(parkingUsed()>=lvl().parking)return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  if(S.money<a.price)return toast('Trésorerie insuffisante.','bad');
+  const car=a.real; car.paid=a.price; car.spent=a.checked?150:0; car.uid=a.id;
+  S.money-=a.price; S.stats.bought++; S.cars.push(car); S.ads=S.ads.filter(x=>x.id!==id);
+  const pr=bestSkill('prepa');
+  if(pr){ car.cond.carro=+Math.min(.95,car.cond.carro+.03*pr).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.04*pr).toFixed(2); }
+  if(a.scam && !a.checked){
+    toast(a.scam==='km'?`Mauvaise surprise : le compteur de la ${carName(car)} était trafiqué.`:`Mauvaise surprise : la ${carName(car)} a été accidentée.`,'bad');
+    log(`Arnaque : ${carName(car)} achetée ${eur(a.price)} à ${a.seller}, ${a.scam==='km'?'compteur trafiqué':'accident caché'}.`);
+  } else log(`Achat à un particulier : ${carName(car)} pour ${eur(a.price)}.`);
+  commit();
+}
+// --- Mois de jeu : nouvelle saison, et un événement une fois sur deux
+function marketTick(t){
+  if(!S.nextMonthAt){ S.nextMonthAt=t+MONTH; return false; }
+  if(t<S.nextMonthAt) return false;
+  S.monthIdx++; S.nextMonthAt=t+MONTH;
+  S.event=Math.random()<.5?ri(1,EVENTS.length):0;
+  const se=SEASONS[S.monthIdx%4];
+  log(`Nouvelle saison : ${se.name}.${S.event?' '+EVENTS[S.event-1].name+'.':''}`);
+  toast(S.event?`${se.name} · ${EVENTS[S.event-1].name}`:`C'est le début de la saison : ${se.name}.`);
+  return true;
+}
+function marketBanner(){
+  const se=SEASONS[S.monthIdx%4], ev=S.event?EVENTS[S.event-1]:null;
+  const fx=(o)=>Object.entries(o).map(([k,v])=>`<span class="chip ${v>0?'up':'down'}">${k==='all'?'Toutes':TYPE_LABEL[k]} ${v>0?'+':'−'}${Math.round(Math.abs(v)*100)} %</span>`).join('');
+  return `<div class="market glass"><div><span class="lbl">Saison</span><b>${se.name}</b>${fx(se.fx)}</div>
+    ${ev?`<div><span class="lbl">Actualité</span><b>${ev.name}</b>${fx(ev.fx)}<span class="meta">${ev.text}</span></div>`:''}
+    <div class="next"><span class="lbl">Mois suivant</span><b class="num" data-ends="${S.nextMonthAt}">${mmss(S.nextMonthAt-now())}</b></div></div>`;
 }
 
 // --- Progression
@@ -536,7 +651,7 @@ function staffTick(t){
     const c=S.clients.find(c=>t-(c.arrivedAt||0)>20000 && !(nego&&nego.clientId===c.id));
     if(!c)break;
     const car=carOf(c); if(!car)continue;
-    const price=r100(Math.min(car.ask, c.offer+(c.max-c.offer)*(.25+.13*v.skill)));
+    const price=c.persona==='decide'?car.ask:r100(Math.min(car.ask, c.offer+(c.max-c.offer)*(.25+.13*v.skill)));
     const fee=r100(price*.03);
     const v0=valueOf(car), profit=price-car.paid-car.spent-fee;
     S.money+=price-fee; S.stats.sold++; S.stats.profit+=profit; v.sales++;
@@ -562,6 +677,9 @@ function tick(){
   if(S.lots.length<4 && t>=S.nextLotAt){S.lots.push(newLot()); S.nextLotAt=t+rnd(25000,45000); changed=true;}
   if(onSale().length && t>=S.nextClientAt){spawnClient(); S.nextClientAt=t+rnd(18000,35000)/(1+.12*skillSum('accueil')); changed=true;}
   if(staffTick(t)) changed=true;
+  if(marketTick(t)) changed=true;
+  if(S.ads.length<2 && t>=S.nextAdAt){ S.ads.push(newAd()); S.nextAdAt=t+rnd(50000,90000); changed=true; }
+  const na=S.ads.length; S.ads=S.ads.filter(a=>a.expiresAt>t); if(S.ads.length!==na) changed=true;
   const before=S.clients.length;
   S.clients=S.clients.filter(c=>(c.expiresAt>t||(nego&&nego.clientId===c.id))&&carOf(c)&&carOf(c).status==='vente');
   if(S.clients.length!==before)changed=true;
@@ -620,7 +738,7 @@ function render(){
 }
 
 function viewLots(){
-  return `<h2>Salle des <em>ventes</em></h2><p class="lead">De nouveaux lots arrivent au fil du temps. Une inspection à 150 € révèle l'état réel. Sans elle, vous enchérissez à l'aveugle.</p>
+  return `${marketBanner()}<h2>Salle des <em>ventes</em></h2><p class="lead">De nouveaux lots arrivent au fil du temps. Une inspection à 150 € révèle l'état réel. Sans elle, vous enchérissez à l'aveugle.</p>
   ${S.lots.length?`<div class="grid">${S.lots.map(l=>{const c=l.car;
     return `<article class="card glass">${stage(c,{num:l.id,tagR:c.inspected?'Inspecté':'Non inspecté'})}
       <div class="body">${head(c)}
@@ -629,12 +747,24 @@ function viewLots(){
       <div class="row end"><button class="btn main" data-act="bid" data-id="${l.id}">Enchérir <small>dès ${eur(l.start)}</small></button>
       ${c.inspected?'':`<button class="btn" data-act="inspect" data-id="${l.id}">Inspecter <small>150 €</small></button>`}</div>
       </div></article>`}).join('')}</div>`
-  :`<div class="empty">Aucun lot pour le moment. Le prochain arrive dans <span class="num" data-ends="${S.nextLotAt}">${mmss(S.nextLotAt-now())}</span>.</div>`}`;
+  :`<div class="empty">Aucun lot pour le moment. Le prochain arrive dans <span class="num" data-ends="${S.nextLotAt}">${mmss(S.nextLotAt-now())}</span>.</div>`}
+  <h2>Annonces de <em>particuliers</em></h2><p class="lead">Des prix bas, sans enchère. Mais certains vendeurs cachent un compteur trafiqué ou un accident. L'inspection à 150 € vous protège.</p>
+  ${S.ads.length?`<div class="grid">${S.ads.map(a=>{const c=a.car;
+    const flag=a.checked?(a.scam?`<div class="unknown warn">${a.scam==='km'?`Compteur trafiqué : la voiture a en réalité ${kmf(a.real.km)}.`:'Accident caché : carrosserie et mécanique abîmées.'}</div>`:`<div class="unknown ok">Inspection faite, l'annonce est honnête.</div>`):'';
+    return `<article class="card glass">${stage(c,{tagL:'Particulier',tagR:a.checked?(a.scam?'Arnaque':'Vérifiée'):'Non vérifiée'})}
+      <div class="body">${head(c,`<span class="price num">${eur(a.price)}</span>`)}
+      <div class="meta">Annonce de ${a.seller} · expire dans <span class="num" data-ends="${a.expiresAt}">${mmss(a.expiresAt-now())}</span></div>
+      ${condsHTML(c)}${flag}
+      <div class="meta">${a.checked?'Valeur réelle':'Valeur annoncée'} <b class="num" style="color:var(--fg)">${eur(valueOf(c))}</b></div>
+      <div class="row end"><button class="btn main" data-act="adBuy" data-id="${a.id}">Acheter <small>${eur(a.price)}</small></button>
+      ${a.checked?'':`<button class="btn" data-act="adInspect" data-id="${a.id}">Inspecter <small>150 €</small></button>`}</div>
+      </div></article>`}).join('')}</div>`
+  :`<div class="empty">Aucune annonce pour l'instant. La prochaine arrive dans <span class="num" data-ends="${S.nextAdAt}">${mmss(S.nextAdAt-now())}</span>.</div>`}`;
 }
 function viewStock(){
   if(!S.cars.length)return `<h2>Votre <em>stock</em></h2><div class="empty">Votre parking est vide. Passez par la salle des ventes pour acheter votre première voiture.</div>`;
   const st={stock:'Sur le parking',atelier:'À l’atelier',vente:'En vente'};
-  return `<h2>Votre <em>stock</em></h2><p class="lead">Fixez un prix et exposez la voiture au showroom, ou passez-la d'abord à l'atelier pour augmenter sa valeur.</p>
+  return `${marketBanner()}<h2>Votre <em>stock</em></h2><p class="lead">Fixez un prix et exposez la voiture au showroom, ou passez-la d'abord à l'atelier pour augmenter sa valeur.</p>
   <div class="grid">${S.cars.map(c=>`<article class="card glass">${stage(c,{tagL:st[c.status],tagR:c.status==='vente'?eur(c.ask):''})}
     <div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
     ${condsHTML(c)}
@@ -666,11 +796,11 @@ function viewAtelier(){
 }
 function viewShowroom(){
   const cars=onSale();
-  return `<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.</p>
+  return `${marketBanner()}<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.</p>
   ${staffOf('vendeur').length?`<p class="meta" style="margin:-8px 0 16px">Vos vendeurs prennent en charge les clients qui attendent plus de 20 secondes.</p>`:''}
-  ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c);return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b></small></div>
-    <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span><button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button></div></div>`}).join('')}</div>`
-  :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(S.nextClientAt-now())}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
+  ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c);return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>${c.persona==='decide'?`Veut la ${carName(car)} au prix affiché, <b class="num">${eur(c.offer)}</b>`:`Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b>`}${c.trade?` · a une ${carName(c.trade.car)} à reprendre`:''}</small></div>
+    <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span>${c.persona==='decide'?`<button class="btn main" data-act="buyDirect" data-id="${c.id}">Vendre à ${eur(c.offer)}</button>`:`<button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button>`}</div></div>`}).join('')}</div>`
+  :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(Math.max(0,S.nextClientAt-now()))}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
   <h2>En <em>exposition</em></h2>
   ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
 }
@@ -774,8 +904,12 @@ function renderModal(){
       <div class="inner">
       <div class="quote">« ${esc(nego.msg)} »</div>
       <div class="meta">${carName(car)} · ${car.color.n} · affichée ${eur(car.ask)} · valeur estimée ${eur(valueOf(car))}</div>
-      ${nego.done?(nego.result==='sold'?`<div class="kv"><span>Prix de vente</span><b class="num">${eur(nego.price)}</b><span>Marge</span><b class="num" style="color:${nego.profit>=0?'var(--good)':'var(--bad)'}">${eur(nego.profit)}</b></div>`:'')
-        +`<div class="row"><button class="btn main" data-act="closeModal">Fermer</button></div>`
+      ${nego.done?(nego.result==='sold'?`<div class="kv"><span>Prix de vente</span><b class="num">${eur(nego.price)}</b><span>Marge</span><b class="num" style="color:${nego.profit>=0?'var(--good)':'var(--bad)'}">${eur(nego.profit)}</b></div>`
+        +(nego.trade?`<div class="tradein"><div class="meta" style="margin-bottom:6px">« Vous me reprenez ma voiture ? Je vous la laisse pour ${eur(nego.trade.price)}. »</div>
+          <div class="card glass">${stage(nego.trade.car)}<div class="body">${head(nego.trade.car,`<span class="price num">${eur(nego.trade.price)}</span>`)}${condsHTML(nego.trade.car)}<div class="meta">Valeur estimée <b class="num" style="color:var(--fg)">${eur(valueOf(nego.trade.car))}</b></div>
+          <div class="row"><button class="btn main" data-act="tradeAccept">Reprendre pour ${eur(nego.trade.price)}</button><button class="btn ghost" data-act="tradeRefuse">Refuser la reprise</button></div></div></div></div>`
+          :nego.tradeDone==='ok'?`<div class="meta">Reprise faite, la voiture est sur votre parking.</div>`:''):'')
+        +(nego.trade?'':`<div class="row"><button class="btn main" data-act="closeModal">Fermer</button></div>`)
       :`<div class="row" style="justify-content:space-between"><span class="meta">Offre du client <b class="num" style="color:var(--fg)">${eur(c.offer)}</b></span>
           <span class="row"><span class="meta">Patience</span><span class="patience">${Array.from({length:c.patienceMax},(_,i)=>`<i class="${i<c.patience?'on':''}"></i>`).join('')}</span></span></div>
         <div class="row"><button class="btn main" data-act="negoAccept">Accepter ${eur(c.offer)}</button></div>
@@ -818,6 +952,11 @@ document.addEventListener('click',e=>{
     case 'negoCounter': negoCounter(); break;
     case 'negoGeste': negoGeste(); break;
     case 'negoDismiss': negoDismiss(); break;
+    case 'buyDirect': buyDirect(n); break;
+    case 'tradeAccept': tradeAccept(); break;
+    case 'tradeRefuse': tradeRefuse(); break;
+    case 'adBuy': adBuy(n); break;
+    case 'adInspect': adInspect(n); break;
     case 'closeModal': auction=null; nego=null; renderModal(); render(); break;
     case 'goStock': auction=null; S.tab='stock'; renderModal(); commit(); break;
     case 'upgrade': upgrade(); break;
@@ -836,7 +975,7 @@ document.addEventListener('click',e=>{
   }
 });
 
-function seed(){ for(let i=0;i<4;i++)S.lots.push(newLot()); S.nextLotAt=now()+30000;
+function seed(){ for(let i=0;i<4;i++)S.lots.push(newLot()); S.nextLotAt=now()+30000; S.ads=[newAd()]; S.nextAdAt=now()+60000; S.nextMonthAt=now()+MONTH;
   log('Ouverture du garage. 15 000 € en caisse et trois places de parking.'); }
 function start(data){
   S=(data&&data.S)||load();
