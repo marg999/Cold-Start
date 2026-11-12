@@ -111,6 +111,8 @@ h2 em{color:var(--amber)}
 .car.refl{bottom:auto;top:95%;z-index:1;opacity:.24;transform:translateX(-50%) scaleY(-1);
   -webkit-mask-image:linear-gradient(to top,#000 0%,transparent 38%);mask-image:linear-gradient(to top,#000 0%,transparent 38%)}
 .stage.atelier .car{bottom:17%;width:calc(var(--w)*.8)}
+.lv4 .hero{background:linear-gradient(180deg,rgba(13,10,8,.15) 0%,rgba(13,10,8,.05) 40%,rgba(13,10,8,.92) 100%),url("decor-showroom.jpg") center 40%/cover no-repeat,#22170f}
+.lv4 .stage.expo{background:url("decor-showroom.jpg") 72% 86%/150% auto no-repeat,#1c140e}
 .stage.atelier .car.refl{top:83%;bottom:auto}
 .dust{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .32 0 0 0 0 .2 0 0 0 1.6 -.45'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23d)'/%3E%3C/svg%3E"),rgba(120,92,60,.45);
@@ -230,10 +232,11 @@ h2 em{color:var(--amber)}
 const YEAR = 2026;
 const LEVELS = [null,
   {name:'Terrain vague', parking:3, ateliers:1, tiers:[1]},
-  {name:'Petit garage',  parking:5, ateliers:2, tiers:[1,2]},
-  {name:'Garage multimarque', parking:8, ateliers:3, tiers:[1,2], staff:4},
+  {name:'Petit garage',  parking:5, ateliers:2, tiers:[1,2], unlock:'les berlines, SUV et coupés aux enchères'},
+  {name:'Garage multimarque', parking:8, ateliers:3, tiers:[1,2], staff:4, unlock:'le recrutement de 4 employés'},
+  {name:'Showroom', parking:10, ateliers:3, tiers:[1,2,3], staff:6, unlock:'les sportives, un vrai showroom et 6 postes d’employés'},
 ];
-const UPGRADES = {2:{cost:25000, money:40000, rep:15, sold:5}, 3:{cost:60000, money:90000, rep:30, sold:15}};
+const UPGRADES = {2:{cost:25000, money:40000, rep:15, sold:5}, 3:{cost:60000, money:90000, rep:30, sold:15}, 4:{cost:120000, money:180000, rep:45, sold:30}};
 
 /* Employés : un « mois » de jeu dure 5 minutes, les salaires tombent à chaque fin de mois.
    Les portraits viennent des fichiers employe-<métier>-<1..4>.png (silhouette tant qu'ils manquent). */
@@ -265,6 +268,11 @@ const MODELS = [
   {id:'atlas',   brand:'Maurel',    name:'Atlas',    type:'suv', tier:2, base:36000, w:66, colors:[['argent','Argent'],['olive','Vert olive'],['rouge','Rouge grenat']]},
   {id:'ridge',   brand:'Kaiden',    name:'Ridge',    type:'suv', tier:2, base:43000, w:68, colors:[['ardoise','Gris ardoise'],['creme','Blanc crème'],['orange','Orange cuivré']]},
   {id:'v4',      brand:'Halvorsen', name:'V4 Coupé', type:'coupe', tier:2, base:56000, w:70, colors:[['argent','Argent'],['jaune','Jaune course'],['orange','Orange course']]},
+  // Sportives : niveau 4, clients exigeants sur l'état
+  {id:'brisa',   brand:'Ashcombe',  name:'Brisa Spider', type:'cabriolet', tier:3, base:78000, w:68, colors:[['jaune','Jaune primevère'],['rouge','Rouge bordeaux'],['vert','Vert anglais']]},
+  {id:'rs',      brand:'Kaiden',    name:'RS',           type:'sport', tier:3, base:72000, w:72, colors:[['blanc','Blanc nacré'],['bleu','Bleu électrique'],['noir','Noir mat']]},
+  {id:'vortex',  brand:'Vortex',    name:'9 S',          type:'sport', tier:3, base:118000, w:68, colors:[['gris','Gris craie'],['bleu','Bleu nuit'],['vert','Vert anglais']]},
+  {id:'strada',  brand:'Ferrano',   name:'Strada GT',    type:'coupe', tier:3, base:165000, w:74, colors:[['rouge','Rouge course'],['noir','Noir verni'],['argent','Argent']]},
 ];
 const CLIENT_NAMES = ['M. Bertin','Mme Lefèvre','M. Haddad','Mme Rossi','M. Petit','Mme Diallo','M. Garnier','Mme Moreau','M. Lambert','Mme Chevalier','M. Roux','Mme Fontaine','M. Nguyen','Mme Girard'];
 const RIVALS = ['Garage Martin','Auto Prestige 93','Occasions Leroy','M. Faure, marchand','Car Center Nord'];
@@ -277,18 +285,19 @@ const PERSONAS = {
 function pickPersona(){let r=Math.random()*100;for(const[k,p]of Object.entries(PERSONAS)){if((r-=p.w)<0)return k}return 'indecis'}
 
 /* Marché : une saison par mois de jeu, et parfois un événement qui fait bouger la cote d'un type de voiture */
-const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés'};
+const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés',sport:'sportives',cabriolet:'cabriolets'};
 const SEASONS=[
-  {name:'Printemps', fx:{coupe:.12, citadine:.04}},
-  {name:'Été',       fx:{coupe:.08, citadine:.06, suv:-.05}},
+  {name:'Printemps', fx:{coupe:.12, cabriolet:.15, citadine:.04}},
+  {name:'Été',       fx:{coupe:.08, cabriolet:.10, citadine:.06, suv:-.05}},
   {name:'Automne',   fx:{berline:.06, compacte:.04}},
-  {name:'Hiver',     fx:{suv:.12, coupe:-.08}},
+  {name:'Hiver',     fx:{suv:.12, coupe:-.08, cabriolet:-.15, sport:-.05}},
 ];
 const EVENTS=[
   {name:'Pénurie de puces', text:'Les voitures neuves manquent, l\'occasion grimpe partout.', fx:{all:.10}},
   {name:'Nouvelle taxe sur les gros véhicules', text:'Les SUV deviennent moins désirables.', fx:{suv:-.15}},
   {name:'Flambée des prix du carburant', text:'Tout le monde cherche une petite voiture.', fx:{citadine:.14, compacte:.06, suv:-.08}},
-  {name:'Salon de l\'automobile', text:'Les coupés ont la cote cette saison.', fx:{coupe:.15}},
+  {name:'Salon de l\'automobile', text:'Coupés et sportives ont la cote cette saison.', fx:{coupe:.15, sport:.10}},
+  {name:'Saison de courses', text:'Les passionnés s\'arrachent les sportives.', fx:{sport:.18}},
   {name:'Prime à la conversion', text:'Les familles changent de berline.', fx:{berline:.10}},
   {name:'Ralentissement économique', text:'Les acheteurs serrent leur budget.', fx:{all:-.08}},
 ];
@@ -353,7 +362,7 @@ const lvl=()=>LEVELS[S.level];
 const avgCond=c=>c.meca*.35+c.carro*.3+c.inter*.2+c.pneus*.15;
 function valueOf(car,cond){
   const m=model(car.modelId), age=Math.max(0,YEAR-car.year);
-  const a=Math.pow(.885,age), k=Math.max(.35,1-car.km/320000);
+  const a=Math.pow(m.tier===3?.95:.885,age), k=Math.max(.35,1-car.km/320000);
   const cf=.4+.6*(cond ?? avgCond(car.cond));
   return r100(m.base*a*k*cf*(S?marketFx(m.type):1));
 }
@@ -452,14 +461,17 @@ function unlist(uid){
 function spawnClient(){
   const cars=onSale(); if(!cars.length||S.clients.length>=3+staffOf('accueil').length)return;
   const car=pick(cars), v=valueOf(car); let key=pickPersona(), P=PERSONAS[key];
-  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF);
+  // les amateurs de sportives sont exigeants : une voiture mal préparée les refroidit
+  const sport=model(car.modelId).tier===3, ac=avgCond(car.cond), picky=sport?(ac>=.85?1.06:ac>=.7?.94:.82):1;
+  if(sport && ac<.85 && key==='decide'){ key='negociateur'; P=PERSONAS.negociateur; }
+  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky);
   // un acheteur décidé paie le prix affiché s'il rentre dans son budget, sinon il négocie
   if(key==='decide' && car.ask>max){ key='indecis'; P=PERSONAS.indecis; }
   const offer=key==='decide'?car.ask:r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
   const trade=Math.random()<.3?newTrade():null;
   S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
     patience:P.patience, patienceMax:P.patience, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil')});
-  toast(key==='decide'?`Un client veut la ${carName(car)} au prix affiché.`:`Un client est au showroom pour la ${carName(car)}.`);
+  toast(key==='decide'?`Un client veut la ${carName(car)} au prix affiché.`:sport&&ac<.7?`Un amateur regarde la ${carName(car)}, mais son état le refroidit.`:`Un client est au showroom pour la ${carName(car)}.`);
 }
 // voiture qu'un client propose de laisser en reprise
 function newTrade(){
@@ -588,7 +600,7 @@ function upgradeReqs(){
 function upgrade(){
   const r=upgradeReqs(); if(!r||!r.list.every(x=>x.ok))return;
   S.money-=r.u.cost; S.level++; log(`Nouveau niveau : ${lvl().name}.`);
-  toast(S.level===2?`Niveau 2 : ${lvl().name}. Berlines, SUV et coupés arrivent aux enchères.`:`Niveau ${S.level} : ${lvl().name}. Vous pouvez recruter une équipe.`,'good');
+  toast(`Niveau ${S.level} : ${lvl().name}. Débloque ${lvl().unlock}.`,'good');
   if(staffSlots())refreshCandidates();
   commit();
 }
@@ -725,6 +737,7 @@ function head(car,right){
 const TABS=[['encheres','Enchères'],['stock','Stock'],['atelier','Atelier'],['showroom','Showroom'],['equipe','Équipe'],['profil','Profil']];
 let hiring=null;
 function render(){
+  document.body.classList.toggle('lv4',S.level>=4);
   document.getElementById('top').innerHTML=`
     <div class="brand">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}<div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
       <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div></div>
@@ -802,7 +815,7 @@ function viewShowroom(){
     <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span>${c.persona==='decide'?`<button class="btn main" data-act="buyDirect" data-id="${c.id}">Vendre à ${eur(c.offer)}</button>`:`<button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button>`}</div></div>`}).join('')}</div>`
   :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(Math.max(0,S.nextClientAt-now()))}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
   <h2>En <em>exposition</em></h2>
-  ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
+  ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée',scene:'expo'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
 }
 function stars(n){return `<span class="stars" aria-label="${n} sur 5">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`}
 function roleEffect(r){
@@ -849,9 +862,9 @@ function viewProfil(){
       </div></section>
     <section class="panel glass"><h3>${r?`Prochain niveau : ${LEVELS[S.level+1].name}`:'Niveau maximum du prototype'}</h3>
       ${r?`${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
-      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts${S.level+1===2?', et les berlines, SUV et coupés aux enchères':', et le recrutement de '+LEVELS[S.level+1].staff+' employés'}.</p>
+      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts, et ${LEVELS[S.level+1].unlock}.</p>
       <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>Agrandir le garage</button>`
-      :`<p class="meta">Les niveaux suivants (showroom, concession agréée, concession de luxe) arriveront dans les prochaines versions.</p>`}
+      :`<p class="meta">Les niveaux suivants (concession agréée, concession de luxe) arriveront dans les prochaines versions.</p>`}
     </section>
     <section class="panel glass"><h3>Journal</h3>
       ${S.log.length?`<ul class="log">${S.log.map(l=>`<li><time>${new Date(l.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="meta">Rien pour l’instant.</p>'}
