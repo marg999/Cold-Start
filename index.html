@@ -33,14 +33,14 @@ html,body{background:var(--bg);color:var(--fg)}
 body{font-family:var(--body);font-size:15px;line-height:1.5;min-height:100%;padding-block:0 72px;-webkit-font-smoothing:antialiased}
 #ambient{position:fixed;inset:0;z-index:-1;background:url("decor-flou.jpg") center/cover no-repeat,var(--bg);opacity:.75}
 #ambient::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,transparent,rgba(13,10,8,.85))}
-.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 .glass{background:var(--glass);border:1px solid var(--edge);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
 
 /* Bandeau photo */
-.hero{position:relative;min-height:clamp(260px,38vw,420px);display:flex;align-items:flex-end;
+.hero{position:relative;min-height:clamp(200px,26vw,330px);display:flex;align-items:flex-end;
   background:linear-gradient(180deg,rgba(13,10,8,.15) 0%,rgba(13,10,8,.05) 40%,rgba(13,10,8,.92) 100%),url("decor-garage.jpg") center 35%/cover no-repeat,#22170f}
 .hero .wrap{width:100%;display:flex;flex-wrap:wrap;gap:18px 28px;align-items:flex-end;justify-content:space-between;padding-block:28px 26px}
 .brand{min-width:0;flex:1 1 300px;display:flex;gap:18px;align-items:flex-end}
@@ -100,7 +100,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-
 .reward .num{color:var(--amber);font-weight:700;font-size:16px}
 .obj.is-done{border-color:rgba(242,166,90,.55);box-shadow:0 0 0 1px rgba(242,166,90,.25),0 20px 40px rgba(0,0,0,.35)}
 .brand small{display:block;font-size:11px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
-.brand h1{margin:0;font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(48px,8vw,92px);line-height:.92;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.brand h1{margin:0;font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(40px,6vw,78px);line-height:.92;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .brand .lvl{margin-top:8px;color:var(--muted);font-size:14px}
 .stats{display:flex;flex-wrap:wrap;gap:8px}
 .stat{border-radius:16px;padding:10px 16px;min-width:130px}
@@ -233,20 +233,127 @@ h2 em{color:var(--amber)}
 
 /* Notifications */
 #toasts{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;width:min(420px,calc(100% - 32px))}
-.toast{border-radius:14px;padding:11px 15px;font-size:14px;background:var(--glass-strong);border:1px solid var(--edge-strong);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.45);animation:in .25s ease-out;display:flex;gap:10px;align-items:baseline}
+.toast{border-radius:14px;padding:10px 12px 10px 15px;font-size:14px;background:var(--glass-strong);border:1px solid var(--edge-strong);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.45);animation:in .25s ease-out;display:flex;gap:10px;align-items:center}
 .toast::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--amber);transform:translateY(-1px)}
 .toast.bad::before{background:var(--bad)} .toast.good::before{background:var(--good)}
 @keyframes in{from{transform:translateY(8px);opacity:.3}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}.progress i{transition:none}}
 @media (max-width:540px){.stat{min-width:0;flex:1 1 40%}.bigprice{font-size:42px}h2{font-size:32px}}
+/* Mise en page : contenu à gauche, panneau « À faire » transparent à droite (glissant sur téléphone) */
+.navrow{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.todo-btn{display:none;flex:none;align-items:center;gap:6px;border-radius:999px;padding:11px 16px;font-weight:600;font-size:14px;color:var(--fg)}
+.todo-btn .pill,.tabs .pill{display:inline-block;margin-left:6px;min-width:19px;padding:0 6px;border-radius:999px;background:var(--amber);color:#140f0b;font-size:11px;line-height:19px;text-align:center}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:26px;align-items:start}
+#todo{position:sticky;top:calc(env(safe-area-inset-top,0px) + 78px);max-height:calc(100vh - 96px);overflow-y:auto;border-radius:var(--r);padding:18px;margin-top:26px;background:rgba(18,13,10,.4);scrollbar-width:thin}
+#scrim{display:none}
+.todo-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#todo h3{margin:0;font-family:var(--display);font-weight:400;font-size:30px}
+#todo h4{margin:22px 0 8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.todo-list,.mini-objs,.mini-emps{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.todo-list li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid var(--edge)}
+.todo-list li>div{min-width:0;display:flex;flex-direction:column;gap:1px}
+.todo-list b{font-size:14px;font-weight:600}
+.todo-list small,.mini-objs small,.mini-emps small,.mini-market small{font-size:12.5px;color:var(--muted)}
+.todo-list li.warn{border-color:rgba(236,122,100,.55)}
+.mini-objs li{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1px solid var(--edge);font-size:13.5px}
+.mini-objs li b{color:var(--amber);font-size:13px;flex:none}
+.mini-objs li.is-done{border-color:rgba(242,166,90,.55)}
+.mini-emps li{display:flex;gap:10px;align-items:center}
+.mini-emps li>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.mini-market{display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.mini-market>div{display:flex;flex-wrap:wrap;gap:5px 6px;align-items:center}
+.btn.sm{padding:7px 12px;font-size:13px;flex:none;border-radius:10px}
+.face.xs{width:22px;height:22px;vertical-align:middle;margin-right:6px}
+.mebtn{padding:0;border:0;background:none;border-radius:50%;flex:none;cursor:pointer}
+.mebtn:hover .me{border-color:#fff}
+@media (min-width:1100px){.todo-x{display:none}}
+@media (max-width:1099px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .todo-btn{display:inline-flex}
+  #todo{position:fixed;z-index:26;top:0;right:0;bottom:0;margin:0;width:min(380px,92vw);max-height:none;border-radius:20px 0 0 20px;
+    padding:calc(18px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) 18px;
+    background:var(--glass-strong);transform:translateX(105%);transition:transform .25s ease,visibility .25s;visibility:hidden}
+  #todo.open{transform:none;visibility:visible}
+  #scrim.open{display:block;position:fixed;inset:0;z-index:25;background:rgba(6,4,3,.55)}
+}
+@media (max-width:540px){
+  .tabs{gap:2px;padding:4px}.tabs button{padding:8px 9px;font-size:13px}
+  .todo-lbl{display:none}
+  .todo-btn{position:fixed;z-index:24;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(14px,env(safe-area-inset-right,0px));width:46px;height:46px;padding:0;justify-content:center;border-radius:50%;background:var(--glass-strong)}
+  .todo-btn .pill{position:absolute;top:-4px;right:-4px;margin:0}
+  .toast{font-size:13px}
+}
+@media (max-width:370px){.tabs button{padding:8px 7px;font-size:12.5px}}
+.eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.status{font-size:13.5px;color:var(--muted)}
+.chance{font-weight:700}
+.chance.fast,.gauge.fast b{color:var(--good)} .chance.normal,.gauge.normal b{color:var(--warn)} .chance.hard,.gauge.hard b{color:#ec9a5c} .chance.toohigh,.gauge.toohigh b{color:var(--bad)}
+.gauge{display:flex;flex-direction:column;gap:8px}
+.gtrack{position:relative;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--good) 0 34%,var(--warn) 34% 55%,#ec9a5c 55% 76%,var(--bad) 76%)}
+.gtrack i{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--fg);border:3px solid #140f0b;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.5);transition:left .15s}
+.glabel{display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.glabel span{color:var(--muted)}
+.stage.is-link{cursor:pointer}
+.stage.is-link:hover img{filter:brightness(.9) contrast(1.08) saturate(.95) sepia(.18)}
+.stage.is-link:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+.tag.b{top:auto;bottom:12px;left:12px;right:auto;background:var(--amber);color:#1a1009;letter-spacing:.04em;text-transform:none}
+.modal.wide{width:min(900px,100%)}
+.modal.wide .stage{aspect-ratio:2/1}
+.modal.wide .car{width:min(calc(var(--w)*.95),80%)}
+.modal.wide .shade{width:min(calc(var(--w)*.98),82%)}
+.modal section h4{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.fiche-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+.comps{display:flex;flex-direction:column}
+.comp{display:flex;flex-direction:column;gap:6px;padding:9px 0;border-bottom:1px solid var(--edge);font-size:14px}
+.comp .btn{align-self:flex-start}
+.hist{list-style:none;margin:0;padding:0;font-size:13.5px;max-height:180px;overflow-y:auto}
+.hist li{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--edge)}
+.hist li span{flex:1}
+.hist time{color:var(--faint);font-size:12px;flex:none}
+.order-inline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:14px;border:1px solid rgba(242,166,90,.5);background:rgba(242,166,90,.08)}
+.order{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;border-radius:var(--r);padding:18px 20px;margin-top:26px;border-color:rgba(242,166,90,.5)}
+.order>div:first-child{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 320px}
+.order b{font-family:var(--display);font-weight:400;font-size:26px;line-height:1.15}
+.order small{color:var(--muted);font-size:13.5px}
+.bays{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+.bayc{display:flex;gap:12px;align-items:center;border-radius:16px;padding:12px 14px;min-width:0}
+.bayc .thumb{width:92px;flex:none;height:auto}
+.bayc .empty-thumb{height:46px;border-radius:10px;border:1px dashed var(--edge-strong)}
+.bay-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.bay-txt small{color:var(--muted)}
+.upgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.upg{border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.upg b{font-size:15px}
+.upg p{margin:0;color:var(--muted);font-size:13.5px;flex:1}
+.upg.owned{border-color:rgba(143,194,141,.45)}
+.teamline{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--muted);margin:0 0 20px}
+.teamline b{color:var(--fg)}
+.post{margin-bottom:26px}
+.post-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-bottom:12px}
+.post-head h3{margin:0;font-family:var(--display);font-weight:400;font-size:30px}
+.post-head p{margin:0;color:var(--muted);font-size:13.5px;flex:1 1 280px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.emp .top small{display:block}
+.task{display:flex;flex-direction:column;gap:5px;font-size:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
+.task small{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.slot-empty{border:1px dashed var(--edge-strong);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;justify-content:center;min-height:170px;background:rgba(13,10,8,.35)}
+.slot-empty b{font-family:var(--display);font-weight:400;font-size:24px}
+.cands{display:flex;flex-direction:column;gap:10px}
+.cand{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;border:1px solid var(--edge)}
+.cand b{display:block;font-size:15px}
+.cand small{display:block}
+.handled{display:flex;gap:10px;align-items:center;min-width:220px;flex:0 1 280px}
+.toast span{flex:1}
+.toast .tbtn{flex:none}
 </style>
 
 <div id="ambient"></div>
 <header class="hero"><div class="wrap" id="top"></div></header>
 <div class="wrap">
-  <nav><div class="tabs glass" id="tabs" role="tablist"></div></nav>
-  <main id="view"></main>
+  <nav><div class="navrow"><div class="tabs glass" id="tabs" role="tablist"></div><button class="todo-btn glass" id="todoBtn" data-act="todoOpen" aria-controls="todo">À faire</button></div></nav>
+  <div class="layout"><main id="view"></main><aside id="todo" class="glass" aria-label="À faire"></aside></div>
 </div>
+<div id="scrim" data-act="todoClose"></div>
 <div id="modal"></div>
 <div id="toasts" aria-live="polite"></div>
 
@@ -370,15 +477,20 @@ const drafts={};
 function freshState(){
   return {v:2, garage:'Garage du Canal', money:15000, rep:5, level:1, uid:1,
     cars:[], lots:[], clients:[], returns:[], log:[],
-    nextLotAt:0, nextClientAt:0, tab:'encheres',
+    nextLotAt:0, nextClientAt:0, tab:'achats',
     stats:{bought:0, sold:0, profit:0, spent:0},
     avatar:1, staff:[], candidates:[], nextPayAt:0, nextCandAt:0,
-    ads:[], nextAdAt:0, monthIdx:0, nextMonthAt:0, event:0, objs:[], objDone:0};
+    ads:[], nextAdAt:0, monthIdx:0, nextMonthAt:0, event:0, objs:[], objDone:0,
+    upg:{}, order:null, nextOrderAt:0, lotsAt:0, lastClientAt:0};
 }
 // complète une ancienne sauvegarde avec les nouveaux champs
 function migrate(d){
   const f=freshState();
-  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event','objs','objDone']) if(d[k]===undefined) d[k]=f[k];
+  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event','objs','objDone','upg','order','nextOrderAt','lotsAt','lastClientAt']) if(d[k]===undefined) d[k]=f[k];
+  d.tab=({encheres:'achats',objectifs:'achats',stock:'garage',atelier:'garage'})[d.tab]||d.tab;
+  if(!['achats','garage','showroom','equipe','profil'].includes(d.tab)) d.tab='achats';
+  (d.cars||[]).forEach(c=>{ if(!c.hist) c.hist=[]; });
+  (d.staff||[]).forEach(e=>{ if(e.task===undefined) e.task=null; });
   (d.clients||[]).forEach(c=>{if(!PERSONAS[c.persona])c.persona='indecis'});
   if(!(d.avatar>=1&&d.avatar<=AVATARS)) d.avatar=1;
   return d;
@@ -516,23 +628,54 @@ function valueOf(car,cond){
   const cf=.4+.6*(cond ?? avgCond(car.cond));
   return r100(m.base*a*k*cf*(S?marketFx(m.type):1));
 }
-function newCar(tier){
-  const m=pick(MODELS.filter(x=>x.tier===tier));
+// --- Améliorations du garage (achat unique) et capacités
+const UPG = [
+  {id:'cafe',     name:'Machine à café',            price:3000,  lvl:1, desc:'Le café est offert aux clients, et chacun a +1 de patience.'},
+  {id:'lavage',   name:'Station de lavage',         price:6000,  lvl:1, desc:'Chaque voiture achetée gagne 5 points de carrosserie et d’intérieur.'},
+  {id:'argus',    name:'Abonnement à la cote',      price:5000,  lvl:1, desc:'L’estimation des lots non inspectés devient beaucoup plus précise.'},
+  {id:'parking',  name:'Extension du parking',      price:10000, lvl:1, desc:'Deux places de parking en plus.'},
+  {id:'outil',    name:'Outillage pro',             price:8000,  lvl:2, desc:'Toutes les réparations vont 20 % plus vite.'},
+  {id:'enseigne', name:'Enseigne lumineuse',        price:12000, lvl:2, desc:'Les clients arrivent 25 % plus souvent.'},
+  {id:'pont',     name:'Pont élévateur supplémentaire', price:18000, lvl:2, desc:'Un pont de plus à l’atelier.'},
+  {id:'lounge',   name:'Coin lounge',               price:25000, lvl:3, desc:'Fauteuils en cuir et bar : les clients acceptent de payer 5 % de plus.'},
+];
+const has=id=>!!(S.upg&&S.upg[id]);
+const capPark=()=>lvl().parking+(has('parking')?2:0);
+const capBays=()=>lvl().ateliers+(has('pont')?1:0);
+const LOTS_EVERY=5*60*1000;
+
+function newCar(tier,forceModel,forceColor){
+  const m=forceModel?model(forceModel):pick(MODELS.filter(x=>x.tier===tier));
   const year=ri(2011,2024), age=YEAR-year;
   const km=Math.round((age*rnd(7000,19000)+rnd(0,6000))/1000)*1000;
   const q=rnd(.25,.92), c=()=>+clamp(q+rnd(-.25,.2),.08,1).toFixed(2);
-  const [cs,cn]=pick(m.colors);
-  return {uid:S.uid++, modelId:m.id, year, km, color:{s:cs,n:cn}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
-    inspected:false, status:'lot', paid:0, spent:0};
+  const col=(forceColor&&m.colors.find(x=>x[0]===forceColor))||pick(m.colors);
+  return {uid:S.uid++, modelId:m.id, year, km, color:{s:col[0],n:col[1]}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
+    inspected:false, status:'lot', paid:0, spent:0, hist:[]};
 }
 function newLot(){
-  const car=newCar(pick(lvl().tiers)); const v=valueOf(car);
+  const o=S.order; let car;
+  // quand une commande est en cours, la voiture recherchée passe parfois aux enchères
+  if(o && Math.random()<.3){ car=newCar(0,o.modelId,o.color); if(car.km>o.maxKm) car.km=Math.round(o.maxKm*rnd(.4,.95)/1000)*1000; }
+  else car=newCar(pick(lvl().tiers));
+  const v=valueOf(car);
   return {id:car.uid, car, start:Math.max(500,r100(v*rnd(.35,.5))), rivalMax:v*rnd(.62,.98)};
 }
+function refreshLots(){ S.lots=[]; for(let i=0;i<4;i++) S.lots.push(newLot()); S.lotsAt=now()+LOTS_EVERY; }
 function log(t){S.log.unshift({t,at:now()}); S.log=S.log.slice(0,60);}
 const parkingUsed=()=>S.cars.length;
 const ateliersUsed=()=>S.cars.filter(c=>c.status==='atelier').length;
 const onSale=()=>S.cars.filter(c=>c.status==='vente');
+const needsRepair=c=>Object.keys(COMPS).some(k=>c.cond[k]<.9);
+function hist(car,t,v){ (car.hist=car.hist||[]).push({t,v:v||0,at:now()}); car.hist=car.hist.slice(-14); }
+// toute voiture qui entre au garage passe par ici
+function acquire(car,price,how){
+  car.inspected=true; car.status='stock'; car.paid=price; car.spent=car.spent||0;
+  hist(car,how,price);
+  if(has('lavage')){ car.cond.carro=+Math.min(.95,car.cond.carro+.05).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.05).toFixed(2); }
+  if(staffOf('prepa').length) car.prepPending=true;
+  S.money-=price; S.stats.bought++; S.cars.push(car);
+}
 
 // --- Enchères
 function inspect(lotId){
@@ -544,7 +687,7 @@ function inspect(lotId){
 const stepOf=p=>p<5000?100:p<20000?250:500;
 function startAuction(lotId){
   const l=S.lots.find(x=>x.id===lotId); if(!l)return;
-  if(parkingUsed()>=lvl().parking)return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  if(parkingUsed()>=capPark())return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
   auction={lotId, price:l.start, leader:null, endsAt:now()+15000, rivalMax:l.rivalMax,
     nextRivalAt:now()+rnd(1800,3500), rival:pick(RIVALS), done:false, carCache:l.car};
   renderModal();
@@ -569,12 +712,10 @@ function auctionTick(){
 function endAuction(forfeit){
   const a=auction; a.done=true;
   const l=S.lots.find(x=>x.id===a.lotId); S.lots=S.lots.filter(x=>x.id!==a.lotId);
+  if(!l){ commit(); renderModal(); return; }
   if(a.leader==='player' && !forfeit){
-    const car=l.car; car.inspected=true; car.status='stock'; car.paid=a.price;
-    const pr=bestSkill('prepa');
-    if(pr){ car.cond.carro=+Math.min(.95,car.cond.carro+.03*pr).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.04*pr).toFixed(2); }
-    S.money-=a.price; S.stats.bought++; S.cars.push(car);
-    a.result='win'; objEvent('auctionWin'); log(`Achat aux enchères : ${carName(car)} pour ${eur(a.price)}.`);
+    acquire(l.car,a.price,'Achetée aux enchères');
+    a.result='win'; objEvent('auctionWin'); log(`Achat aux enchères : ${carName(l.car)} pour ${eur(a.price)}.`);
   } else {
     a.result='lose';
     log(`${carName(l.car)} adjugée à ${a.leader==='rival'?a.rival+' pour '+eur(a.price):'personne'}.`);
@@ -586,27 +727,48 @@ function endAuction(forfeit){
 const repairCost=(car,k)=>Math.max(80,r100(model(car.modelId).base*COMPS[k].w*(.95-car.cond[k])*1.6));
 const repairTime=(car,k)=>Math.round((15+70*(.95-car.cond[k]))*1000*mecaFactor());
 function startRepair(uid,k){
-  const car=S.cars.find(c=>c.uid===uid); if(!car||car.status!=='stock')return;
-  if(ateliersUsed()>=lvl().ateliers)return toast('Atelier occupé. Attendez la fin du travail en cours.','bad');
+  const car=S.cars.find(c=>c.uid===uid); if(!car||(car.status!=='stock'&&car.status!=='vente'))return;
+  if(ateliersUsed()>=capBays())return toast('Tous les ponts sont occupés. Attendez la fin d’une réparation.','bad');
   const cost=repairCost(car,k); if(S.money<cost)return toast('Trésorerie insuffisante.','bad');
   S.money-=cost; car.spent+=cost; S.stats.spent+=cost;
+  if(car.status==='vente'){ car.relist=car.ask; S.clients=S.clients.filter(c=>c.carUid!==uid||c.handledBy); }
   car.status='atelier'; car.job={k,start:now(),endsAt:now()+repairTime(car,k)};
-  toast(`${carName(car)} à l’atelier : ${COMPS[k].label.toLowerCase()}.`); commit();
+  hist(car,`${COMPS[k].label} remise à neuf`,cost);
+  toast(`${carName(car)} sur le pont : ${COMPS[k].label.toLowerCase()}.`); commit();
 }
 
-// --- Ventes
-const defaultAsk=car=>r100(valueOf(car)*1.12);
-function listCar(uid){
-  const car=S.cars.find(c=>c.uid===uid); if(!car||car.status!=='stock')return;
-  const p=parseInt(String(drafts['ask-'+uid]??defaultAsk(car)).replace(/\D/g,''),10);
-  if(!p||p<100)return toast('Indiquez un prix de vente.','bad');
-  car.status='vente'; car.ask=p; delete drafts['ask-'+uid];
-  if(S.nextClientAt<now()+8000)S.nextClientAt=now()+rnd(6000,14000);
-  toast(`${carName(car)} exposée à ${eur(p)}.`); commit();
+// --- Prix et ventes
+const refBudget=car=>valueOf(car)*(1+S.rep*.004)*(has('lounge')?1.05:1);
+const suggested=car=>Math.max(100,Math.floor(refBudget(car)*1.02/100)*100);
+function chance(car,price){
+  const r=price/refBudget(car), pos=clamp((r-.85)/.55,0,1);
+  if(r<=1.04) return {cls:'fast',label:'Vendra vite',hint:'La plupart des clients paieront ce prix sans discuter.',pos};
+  if(r<=1.15) return {cls:'normal',label:'Prix normal',hint:'Certains clients paieront, d’autres négocieront.',pos};
+  if(r<=1.27) return {cls:'hard',label:'Difficile',hint:'Presque tous vont négocier, et certains partiront.',pos};
+  return {cls:'toohigh',label:'Trop cher',hint:price>valueOf(car)*1.3?'Peu de chances de vendre, et votre réputation baissera si quelqu’un paie ce prix.':'Peu de chances de vendre à ce prix.',pos};
 }
+function gaugeInner(car,price){
+  const g=chance(car,price), margin=price-car.paid-car.spent;
+  return `<div class="gauge ${g.cls}"><div class="gtrack"><i style="left:${(g.pos*100).toFixed(1)}%"></i></div>
+    <div class="glabel"><b>${g.label}</b><span>${g.hint}</span></div>
+    <div class="meta">Marge prévue : <b class="num" style="color:${margin>=0?'var(--good)':'var(--bad)'}">${margin>=0?'+':''}${eur(margin)}</b></div></div>`;
+}
+const priceOf=uid=>{const car=S.cars.find(c=>c.uid===uid); const d=drafts['ask-'+uid]; return d!=null?parseInt(String(d).replace(/\D/g,''),10)||0:(car.status==='vente'?car.ask:suggested(car));};
+function listCar(uid){
+  const car=S.cars.find(c=>c.uid===uid); if(!car||(car.status!=='stock'&&car.status!=='vente'))return;
+  const p=priceOf(uid);
+  if(!p||p<100)return toast('Indiquez un prix de vente.','bad');
+  const was=car.status; car.status='vente'; car.ask=p; delete drafts['ask-'+uid];
+  if(was==='vente') S.clients.forEach(c=>{ if(c.carUid!==uid||c.handledBy) return;
+    if(c.persona==='decide'){ if(p>c.max){ c.persona='indecis'; c.offer=Math.min(c.offer,p); } else c.offer=p; } else c.offer=Math.min(c.offer,p); });
+  hist(car,was==='vente'?'Nouveau prix':'Mise en vente',p);
+  if(S.nextClientAt<now()+8000){ S.lastClientAt=now(); S.nextClientAt=now()+rnd(6000,14000); }
+  toast(was==='vente'?`Nouveau prix pour la ${carName(car)} : ${eur(p)}.`:`${carName(car)} exposée à ${eur(p)}.`); commit();
+}
+function quickList(uid){ const car=S.cars.find(c=>c.uid===uid); if(!car)return; drafts['ask-'+uid]=String(suggested(car)); listCar(uid); }
 function unlist(uid){
   const car=S.cars.find(c=>c.uid===uid); if(!car)return;
-  car.status='stock'; S.clients=S.clients.filter(c=>c.carUid!==uid); commit();
+  car.status='stock'; S.clients=S.clients.filter(c=>c.carUid!==uid); hist(car,'Retirée de la vente'); commit();
 }
 function spawnClient(){
   const cars=onSale(); if(!cars.length||S.clients.length>=3+staffOf('accueil').length)return;
@@ -614,29 +776,33 @@ function spawnClient(){
   // les amateurs de sportives sont exigeants : une voiture mal préparée les refroidit
   const sport=model(car.modelId).tier===3, ac=avgCond(car.cond), picky=sport?(ac>=.85?1.06:ac>=.7?.94:.82):1;
   if(sport && ac<.85 && key==='decide'){ key='negociateur'; P=PERSONAS.negociateur; }
-  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky);
+  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky*(has('lounge')?1.05:1));
   // un acheteur décidé paie le prix affiché s'il rentre dans son budget, sinon il négocie
   if(key==='decide' && car.ask>max){ key='indecis'; P=PERSONAS.indecis; }
   const offer=key==='decide'?car.ask:r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
-  const trade=Math.random()<.3?newTrade():null;
-  S.clients.push({id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
-    patience:P.patience, patienceMax:P.patience, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil')});
-  toast(key==='decide'?`Un client veut la ${carName(car)} au prix affiché.`:sport&&ac<.7?`Un amateur regarde la ${carName(car)}, mais son état le refroidit.`:`Un client est au showroom pour la ${carName(car)}.`);
+  const trade=Math.random()<.3?newTrade():null, pat=P.patience+(has('cafe')?1:0);
+  const c={id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
+    patience:pat, patienceMax:pat, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil'), handledBy:null};
+  S.clients.push(c);
+  if(key==='decide') toast(`${c.name} veut la ${carName(car)} au prix affiché.`,'',{label:'Vendre',act:'buyDirect',id:c.id});
+  else toast(sport&&ac<.7?`Un amateur regarde la ${carName(car)}, mais son état le refroidit.`:`${c.name} attend au showroom pour la ${carName(car)}.`,'',{label:'Recevoir',act:'nego',id:c.id});
 }
 // voiture qu'un client propose de laisser en reprise
 function newTrade(){
-  const tiers=lvl().tiers, car=newCar(pick(tiers)); car.inspected=true; car.status='stock';
+  const car=newCar(pick(lvl().tiers)); car.inspected=true; car.status='stock';
   return {car, price:r100(valueOf(car)*rnd(.82,1.18))};
 }
+const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
 function buyDirect(id){
-  const c=S.clients.find(x=>x.id===id); if(!c)return;
-  const car=carOf(c);
+  const c=S.clients.find(x=>x.id===id); if(!c||c.handledBy)return;
+  const car=carOf(c); fiche=null;
   nego={clientId:id, carCache:car, name:c.name, persona:c.persona, msg:'', geste:false, done:false};
   sell(c, car.ask, `Elle est parfaite, je la prends au prix affiché.`);
 }
-const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
 function openNego(id){
-  const c=S.clients.find(x=>x.id===id); if(!c)return;
+  const c=S.clients.find(x=>x.id===id); if(!c||c.handledBy)return;
+  if(c.persona==='decide') return buyDirect(id);
+  fiche=null;
   nego={clientId:id, carCache:carOf(c), name:c.name, persona:c.persona,
     msg:`Elle me plaît, mais à ${eur(carOf(c).ask)} c'est trop. Je vous en propose ${eur(c.offer)}.`, geste:false, done:false};
   drafts.counter=String(carOf(c).ask); renderModal();
@@ -664,6 +830,17 @@ function negoGeste(){
   c.max=r100(c.max+valueOf(car)*.06); nego.geste=true;
   nego.msg=`Une garantie 6 mois offerte ? Ça me rassure, c'est un vrai plus.`; commit(); renderModal();
 }
+// le café : une fois par client, il se détend et fait un petit effort
+function negoCafe(){
+  const c=S.clients.find(x=>x.id===nego.clientId); if(!c||c.coffee)return;
+  const car=carOf(c);
+  if(!has('cafe')){ if(S.money<5)return toast('Pas assez de trésorerie, même pour un café.','bad'); S.money-=5; S.stats.spent+=5; }
+  c.coffee=true; c.patience++; c.patienceMax++; c.max=r100(c.max*1.03);
+  if(c.max>=car.ask && Math.random()<.3) return sell(c,car.ask,`Merci pour le café. Vous savez quoi ? Je la prends à ${eur(car.ask)}.`);
+  c.offer=Math.min(car.ask,r100(c.offer+(c.max-c.offer)*.2));
+  nego.msg=pick([`Merci, il est bon ce café. Bon… je peux monter à ${eur(c.offer)}.`,`C'est gentil. Laissez-moi réfléchir… ${eur(c.offer)}, ça irait ?`]);
+  commit(); renderModal();
+}
 function negoAccept(){const c=S.clients.find(x=>x.id===nego.clientId); if(c)sell(c,c.offer,'Parfait, on fait comme ça.');}
 function negoDismiss(){S.clients=S.clients.filter(x=>x.id!==nego.clientId); nego=null; commit(); renderModal();}
 function sell(c,price,msg){
@@ -680,11 +857,11 @@ function sell(c,price,msg){
 }
 function tradeAccept(){
   const t=nego&&nego.trade; if(!t)return;
-  if(parkingUsed()>=lvl().parking)return toast('Parking plein : impossible de reprendre la voiture.','bad');
+  if(parkingUsed()>=capPark())return toast('Parking plein : impossible de reprendre la voiture.','bad');
   if(S.money<t.price)return toast('Trésorerie insuffisante pour cette reprise.','bad');
-  S.money-=t.price; t.car.paid=t.price; t.car.uid=S.uid++; S.cars.push(t.car); S.stats.bought++;
+  t.car.uid=S.uid++; acquire(t.car,t.price,`Reprise de ${nego.name}`);
   log(`Reprise : ${carName(t.car)} de ${nego.name} pour ${eur(t.price)}.`);
-  toast(`${carName(t.car)} reprise et garée sur le parking.`,'good');
+  toast(`${carName(t.car)} reprise et garée sur le parking.`,'good',{label:'Fiche',act:'fiche',id:t.car.uid});
   objEvent('trade'); nego.trade=null; nego.tradeDone='ok'; commit(); renderModal();
 }
 function tradeRefuse(){ if(!nego)return; nego.trade=null; nego.tradeDone='no'; renderModal(); }
@@ -708,18 +885,19 @@ function adInspect(id){
 }
 function adBuy(id){
   const a=S.ads.find(x=>x.id===id); if(!a)return;
-  if(parkingUsed()>=lvl().parking)return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  if(parkingUsed()>=capPark())return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
   if(S.money<a.price)return toast('Trésorerie insuffisante.','bad');
-  const car=a.real; car.paid=a.price; car.spent=a.checked?150:0; car.uid=a.id;
-  S.money-=a.price; S.stats.bought++; S.cars.push(car); S.ads=S.ads.filter(x=>x.id!==id); objEvent('adBuy');
-  const pr=bestSkill('prepa');
-  if(pr){ car.cond.carro=+Math.min(.95,car.cond.carro+.03*pr).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.04*pr).toFixed(2); }
+  const car=a.real; car.spent=a.checked?150:0; car.uid=a.id; car.hist=[];
+  S.ads=S.ads.filter(x=>x.id!==id);
+  acquire(car,a.price,`Achetée à ${a.seller}`); objEvent('adBuy');
   if(a.scam && !a.checked){
-    toast(a.scam==='km'?`Mauvaise surprise : le compteur de la ${carName(car)} était trafiqué.`:`Mauvaise surprise : la ${carName(car)} a été accidentée.`,'bad');
+    hist(car,a.scam==='km'?'Compteur trafiqué découvert':'Accident caché découvert');
+    toast(a.scam==='km'?`Mauvaise surprise : le compteur de la ${carName(car)} était trafiqué.`:`Mauvaise surprise : la ${carName(car)} a été accidentée.`,'bad',{label:'Fiche',act:'fiche',id:car.uid});
     log(`Arnaque : ${carName(car)} achetée ${eur(a.price)} à ${a.seller}, ${a.scam==='km'?'compteur trafiqué':'accident caché'}.`);
-  } else log(`Achat à un particulier : ${carName(car)} pour ${eur(a.price)}.`);
+  } else { log(`Achat à un particulier : ${carName(car)} pour ${eur(a.price)}.`); toast(`${carName(car)} garée sur le parking.`,'good',{label:'Fiche',act:'fiche',id:car.uid}); }
   commit();
 }
+
 // --- Mois de jeu : nouvelle saison, et un événement une fois sur deux
 function marketTick(t){
   if(!S.nextMonthAt){ S.nextMonthAt=t+MONTH; return false; }
@@ -731,12 +909,47 @@ function marketTick(t){
   toast(S.event?`${se.name} · ${EVENTS[S.event-1].name}`:`C'est le début de la saison : ${se.name}.`);
   return true;
 }
-function marketBanner(){
-  const se=SEASONS[S.monthIdx%4], ev=S.event?EVENTS[S.event-1]:null;
-  const fx=(o)=>Object.entries(o).map(([k,v])=>`<span class="chip ${v>0?'up':'down'}">${k==='all'?'Toutes':TYPE_LABEL[k]} ${v>0?'+':'−'}${Math.round(Math.abs(v)*100)} %</span>`).join('');
-  return `<div class="market glass"><div><span class="lbl">Saison</span><b>${se.name}</b>${fx(se.fx)}</div>
-    ${ev?`<div><span class="lbl">Actualité</span><b>${ev.name}</b>${fx(ev.fx)}<span class="meta">${ev.text}</span></div>`:''}
-    <div class="next"><span class="lbl">Mois suivant</span><b class="num" data-ends="${S.nextMonthAt}">${mmss(S.nextMonthAt-now())}</b></div></div>`;
+const fxChips=o=>Object.entries(o).map(([k,v])=>`<span class="chip ${v>0?'up':'down'}">${k==='all'?'Toutes':TYPE_LABEL[k]} ${v>0?'+':'−'}${Math.round(Math.abs(v)*100)} %</span>`).join('');
+
+// --- Commandes de collectionneurs : rares, une seule à la fois
+const COLLECTORS=['M. de Villiers','Mme Arnaud','M. Castellane','Mme Beaumont','M. Delacroix','Mme Valette'];
+const carNameM=id=>{const m=model(id);return `${m.brand} ${m.name}`};
+function newOrder(){
+  const tiers=lvl().tiers, m=pick(MODELS.filter(x=>tiers.includes(x.tier)));
+  const col=Math.random()<.45?null:pick(m.colors);
+  return {id:S.uid++, modelId:m.id, color:col?col[0]:null, colorN:col?col[1]:null, maxKm:pick([60000,80000,100000,120000]),
+    mult:+rnd(1.3,1.45).toFixed(2), name:pick(COLLECTORS), endsAt:now()+12*60000};
+}
+const matchesOrder=car=>{const o=S.order;return !!o&&car.modelId===o.modelId&&(!o.color||car.color.s===o.color)&&car.km<=o.maxKm};
+const orderLabel=o=>`${carNameM(o.modelId)}${o.colorN?' '+o.colorN.toLowerCase():', toutes couleurs'}, moins de ${kmf(o.maxKm)}`;
+function deliverOrder(uid){
+  const o=S.order, car=S.cars.find(c=>c.uid===uid); if(!o||!car||!matchesOrder(car)||car.status==='atelier')return;
+  const price=r100(valueOf(car)*o.mult), profit=price-car.paid-car.spent;
+  S.money+=price; S.stats.sold++; S.stats.profit+=profit; S.rep=clamp(S.rep+3,0,100);
+  S.cars=S.cars.filter(x=>x.uid!==uid); S.clients=S.clients.filter(c=>c.carUid!==uid);
+  log(`Commande livrée : ${carName(car)} à ${o.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}).`);
+  saleEvent(car,profit,false);
+  toast(`${o.name} est ravi : ${eur(price)} encaissés et +3 de réputation.`,'good');
+  S.order=null; S.nextOrderAt=now()+rnd(9,13)*60000; fiche=null; renderModal(); commit();
+}
+function orderTick(t){
+  if(S.order){
+    if(t<S.order.endsAt) return false;
+    log(`Commande expirée : ${S.order.name} a trouvé sa voiture ailleurs.`);
+    toast(`Trop tard : ${S.order.name} a trouvé sa voiture ailleurs.`,'bad');
+    S.order=null; S.nextOrderAt=t+rnd(9,13)*60000; return true;
+  }
+  if(!S.nextOrderAt){ S.nextOrderAt=t+rnd(6,9)*60000; return false; }
+  if(t<S.nextOrderAt) return false;
+  S.order=newOrder();
+  toast(`Commande spéciale : ${S.order.name} cherche une ${orderLabel(S.order)}.`,'',{label:'Voir',act:'tab',id:'achats'});
+  return true;
+}
+function buyUpg(id){
+  const u=UPG.find(x=>x.id===id); if(!u||has(id)||S.level<u.lvl)return;
+  if(S.money<u.price)return toast('Trésorerie insuffisante.','bad');
+  S.money-=u.price; S.stats.spent+=u.price; S.upg[id]=true;
+  log(`Amélioration : ${u.name} (${eur(u.price)}).`); toast(`${u.name} : c'est installé.`,'good'); commit();
 }
 
 // --- Progression
@@ -756,11 +969,13 @@ function upgrade(){
   commit();
 }
 
-// --- Employés
+// --- Employés : chaque métier a des postes, chaque employé a une tâche visible
+const POSTS={3:{vendeur:1,mecano:1,prepa:1,accueil:1},4:{vendeur:2,mecano:2,prepa:1,accueil:1}};
+const postsOf=r=>(POSTS[S.level]||{})[r]||0;
 const staffOf=r=>S.staff.filter(e=>e.role===r);
 const skillSum=r=>staffOf(r).reduce((a,e)=>a+e.skill,0);
 const bestSkill=r=>staffOf(r).reduce((a,e)=>Math.max(a,e.skill),0);
-const mecaFactor=()=>Math.max(.4,1/(1+.12*skillSum('mecano')));
+const mecaFactor=()=>Math.max(.35,1/(1+.12*skillSum('mecano'))*(has('outil')?.8:1));
 const payroll=()=>S.staff.reduce((a,e)=>a+e.salary,0);
 const staffSlots=()=>lvl().staff||0;
 function newCandidate(role){
@@ -775,29 +990,44 @@ function nameFor(c,look){
   return first+' '+c.name.split(' ').slice(1).join(' ');
 }
 function refreshCandidates(){
-  S.candidates=Object.keys(ROLES).flatMap(r=>[newCandidate(r),newCandidate(r)]);
+  S.candidates=Object.keys(ROLES).flatMap(r=>[newCandidate(r),newCandidate(r),newCandidate(r)]);
   S.nextCandAt=now()+MONTH;
 }
 function hire(id){
   const c=S.candidates.find(x=>x.id===id); if(!c)return;
-  if(S.staff.length>=staffSlots())return toast('Équipe complète pour ce niveau.','bad');
+  if(staffOf(c.role).length>=postsOf(c.role))return toast(`Plus de poste libre de ${ROLES[c.role].label.toLowerCase()} pour ce niveau.`,'bad');
   const fee=Math.round(c.salary*.5);
   if(S.money<fee)return toast(`Il faut ${eur(fee)} pour la prime d'embauche.`,'bad');
   S.money-=fee; S.stats.spent+=fee;
   const look=drafts.look??c.look; delete drafts.look;
   const name=nameFor(c,look);
-  S.staff.push({...c, look, name, hiredAt:now(), busyUntil:0, sales:0});
+  S.staff.push({...c, look, name, hiredAt:now(), sales:0, task:null});
   S.candidates=S.candidates.filter(x=>x.id!==id);
   if(!S.nextPayAt)S.nextPayAt=now()+MONTH;
+  if(c.role==='prepa') S.cars.forEach(car=>{ if(car.status==='stock' && !car.hist.some(h=>h.t.startsWith('Préparée'))) car.prepPending=true; });
   log(`Embauche : ${name}, ${ROLES[c.role].label.toLowerCase()}, ${eur(c.salary)} par mois.`);
-  objEvent('hire'); toast(`${name} rejoint l'équipe.`,'good'); hiring=null; renderModal(); commit();
+  objEvent('hire'); toast(`${name} rejoint l'équipe.`,'good'); hiring=null; recruit=null; renderModal(); commit();
 }
 function fire(id){
   const e=S.staff.find(x=>x.id===id); if(!e)return;
+  if(e.task&&e.task.kind==='sale'){ const c=S.clients.find(x=>x.id===e.task.clientId); if(c) c.handledBy=null; }
+  if(e.task&&e.task.kind==='prep'){ const car=S.cars.find(x=>x.uid===e.task.carUid); if(car){ car.prepping=null; car.prepPending=true; } }
   S.money-=e.salary; S.stats.spent+=e.salary;
   S.staff=S.staff.filter(x=>x.id!==id); delete drafts.confirmFire;
   log(`Départ : ${e.name} quitte le garage (indemnité ${eur(e.salary)}).`);
   toast(`${e.name} a quitté le garage.`); commit();
+}
+function vendorSell(v,c,car,t){
+  const price=c.persona==='decide'?car.ask:r100(Math.min(car.ask, c.offer+(c.max-c.offer)*(.25+.13*v.skill)));
+  const fee=r100(price*.03), v0=valueOf(car), profit=price-car.paid-car.spent-fee;
+  S.money+=price-fee; S.stats.sold++; S.stats.profit+=profit; v.sales=(v.sales||0)+1; saleEvent(car,profit,c.persona!=='decide');
+  S.rep=clamp(S.rep+(price>v0*1.3?-1:price<=v0*1.1?2:1),0,100);
+  if(car.cond.meca<.45) S.returns.push({at:t+rnd(60000,150000), name:c.name, car:carName(car), refund:r100(price*.12)});
+  S.cars=S.cars.filter(x=>x.uid!==car.uid);
+  S.clients=S.clients.filter(x=>x.carUid!==car.uid);
+  if(fiche===car.uid) fiche=null;
+  log(`${v.name} a vendu la ${carName(car)} à ${c.name} pour ${eur(price)} (commission ${eur(fee)}).`);
+  toast(`${v.name.split(' ')[0]} a vendu la ${carName(car)} pour ${eur(price)}.`,'good');
 }
 function staffTick(t){
   let changed=false;
@@ -808,26 +1038,55 @@ function staffTick(t){
     toast(S.money<0?`Salaires versés (${eur(p)}). Votre trésorerie est dans le rouge.`:`Salaires du mois versés : ${eur(p)}.`, S.money<0?'bad':'');
     changed=true;
   }
-  // un vendeur libre prend en charge un client qui attend depuis plus de 20 s
+  // vendeurs : prennent un client qui attend depuis plus de 20 s et négocient pendant un moment
   for(const v of staffOf('vendeur')){
-    if(v.busyUntil>t)continue;
-    const c=S.clients.find(c=>t-(c.arrivedAt||0)>20000 && !(nego&&nego.clientId===c.id));
-    if(!c)break;
-    const car=carOf(c); if(!car)continue;
-    const price=c.persona==='decide'?car.ask:r100(Math.min(car.ask, c.offer+(c.max-c.offer)*(.25+.13*v.skill)));
-    const fee=r100(price*.03);
-    const v0=valueOf(car), profit=price-car.paid-car.spent-fee;
-    S.money+=price-fee; S.stats.sold++; S.stats.profit+=profit; v.sales++; saleEvent(car,profit,c.persona!=='decide');
-    S.rep=clamp(S.rep+(price>v0*1.3?-1:price<=v0*1.1?2:1),0,100);
-    if(car.cond.meca<.45) S.returns.push({at:t+rnd(60000,150000), name:c.name, car:carName(car), refund:r100(price*.12)});
-    S.cars=S.cars.filter(x=>x.uid!==car.uid);
-    S.clients=S.clients.filter(x=>x.carUid!==car.uid);
-    v.busyUntil=t+40000-5000*v.skill;
-    log(`${v.name} a vendu la ${carName(car)} à ${c.name} pour ${eur(price)} (commission ${eur(fee)}).`);
-    toast(`${v.name.split(' ')[0]} a vendu la ${carName(car)} pour ${eur(price)}.`,'good');
-    changed=true;
+    const tk=v.task;
+    if(tk){
+      const c=S.clients.find(x=>x.id===tk.clientId), car=c&&carOf(c);
+      if(!c||!car||car.status!=='vente'){ v.task=null; if(c) c.handledBy=null; changed=true; continue; }
+      if(t>=tk.endsAt){ vendorSell(v,c,car,t); v.task=null; changed=true; }
+      continue;
+    }
+    const c=S.clients.find(c=>!c.handledBy && t-(c.arrivedAt||0)>20000 && !(nego&&nego.clientId===c.id));
+    if(c){ c.handledBy=v.id; v.task={kind:'sale', clientId:c.id, start:t, endsAt:t+Math.max(12000,30000-4000*v.skill)}; changed=true; }
+  }
+  // préparateurs : nettoient chaque voiture qui arrive au garage
+  for(const p of staffOf('prepa')){
+    const tk=p.task;
+    if(tk){
+      const car=S.cars.find(x=>x.uid===tk.carUid);
+      if(!car){ p.task=null; changed=true; continue; }
+      if(t>=tk.endsAt){
+        car.cond.carro=+Math.min(.95,car.cond.carro+.03*p.skill).toFixed(2); car.cond.inter=+Math.min(.95,car.cond.inter+.04*p.skill).toFixed(2);
+        car.prepping=null; hist(car,`Préparée par ${p.name}`);
+        toast(`${p.name.split(' ')[0]} a fini de préparer la ${carName(car)}.`,'good',{label:'Fiche',act:'fiche',id:car.uid});
+        p.task=null; changed=true;
+      }
+      continue;
+    }
+    const car=S.cars.find(x=>x.prepPending);
+    if(car){ car.prepPending=false; car.prepping=p.id; p.task={kind:'prep',carUid:car.uid,start:t,endsAt:t+Math.max(10000,26000-3000*p.skill)}; changed=true; }
   }
   return changed;
+}
+// ce que fait un employé en ce moment, pour l'afficher avec une barre de progression
+function empTask(e){
+  if(e.role==='vendeur'){
+    const tk=e.task, c=tk&&S.clients.find(x=>x.id===tk.clientId), car=c&&carOf(c);
+    return c&&car?{label:`Négocie avec ${c.name} pour la ${carName(car)}`,start:tk.start,end:tk.endsAt}:{label:'Attend un client au showroom'};
+  }
+  if(e.role==='prepa'){
+    const tk=e.task, car=tk&&S.cars.find(x=>x.uid===tk.carUid);
+    return car?{label:`Prépare la ${carName(car)}`,start:tk.start,end:tk.endsAt}:{label:'Attend une voiture à préparer'};
+  }
+  if(e.role==='mecano'){
+    const i=staffOf('mecano').indexOf(e), car=S.cars.filter(c=>c.status==='atelier')[i];
+    return car?{label:`${COMPS[car.job.k].label} de la ${carName(car)}`,start:car.job.start,end:car.job.endsAt}:{label:i<capBays()?`Attend une voiture au pont ${i+1}`:'Aide à l’atelier'};
+  }
+  if(e.role==='accueil'){
+    return onSale().length&&S.nextClientAt>now()?{label:'Fait venir le prochain client',start:S.lastClientAt||now(),end:S.nextClientAt}:{label:onSale().length?'Accueille les clients':'Attend que des voitures soient exposées'};
+  }
+  return {label:''};
 }
 
 // --- Objectifs : 3 en cours, chacun rapporte argent et réputation
@@ -861,6 +1120,7 @@ function newObjective(){
   return o;
 }
 function ensureObjs(){ let ch=false; while(S.objs.length<3){ S.objs.push(newObjective()); ch=true; } return ch; }
+function objDoneToast(o){ toast(`Objectif atteint : ${o.label}.`,'good',{label:'Récupérer',act:'claim',id:o.id}); }
 function objEvent(type,amount=1,data){
   for(const o of S.objs){
     if(o.done) continue;
@@ -870,7 +1130,7 @@ function objEvent(type,amount=1,data){
     else if(o.type==='sellNego'){ if(type==='sale' && data.nego) o.progress++; }
     else if(o.type==='sellSport'){ if(type==='sale' && data.sport) o.progress++; }
     else if(o.type===type) o.progress+=amount;
-    if(o.progress>=o.target){ o.progress=o.target; o.done=true; toast(`Objectif atteint : ${o.label}. Récupérez votre récompense.`,'good'); }
+    if(o.progress>=o.target){ o.progress=o.target; o.done=true; objDoneToast(o); }
   }
 }
 function saleEvent(car,profit,nego){ objEvent('sale',1,{profit,nego,sport:model(car.modelId).tier===3}); }
@@ -878,7 +1138,7 @@ function objTick(){
   let ch=ensureObjs();
   for(const o of S.objs) if(o.type==='rep' && !o.done){
     const p=Math.min(o.target,S.rep); if(p!==o.progress){ o.progress=p; ch=true; }
-    if(S.rep>=o.target){ o.done=true; ch=true; toast(`Objectif atteint : ${o.label}. Récupérez votre récompense.`,'good'); }
+    if(S.rep>=o.target){ o.done=true; ch=true; objDoneToast(o); }
   }
   return ch;
 }
@@ -895,28 +1155,33 @@ function skipObj(id){
 }
 
 // --- Boucle de temps
+const typing=()=>{const a=document.activeElement;return !!(a&&a.tagName==='INPUT'&&a.closest('#modal'));};
 function tick(){
   const t=now(); let changed=false;
   S.cars.forEach(car=>{ if(car.status==='atelier'&&t>=car.job.endsAt){
-    car.cond[car.job.k]=.95; car.status='stock'; objEvent('repair');
-    toast(`Atelier terminé : ${carName(car)}, ${COMPS[car.job.k].label.toLowerCase()} remise à neuf.`,'good');
-    delete car.job; changed=true; }});
+    const k=car.job.k; car.cond[k]=.95;
+    if(car.relist){ car.status='vente'; car.ask=car.relist; } else car.status='stock';
+    delete car.relist; delete car.job; objEvent('repair');
+    toast(`Atelier terminé : ${carName(car)}, ${COMPS[k].label.toLowerCase()} remise à neuf.`,'good',{label:car.status==='vente'?'Fiche':'Mettre en vente',act:'fiche',id:car.uid});
+    changed=true; }});
   if(objTick()) changed=true;
-  if(S.lots.length<4 && t>=S.nextLotAt){S.lots.push(newLot()); S.nextLotAt=t+rnd(25000,45000); changed=true;}
-  if(onSale().length && t>=S.nextClientAt){spawnClient(); S.nextClientAt=t+rnd(18000,35000)/(1+.12*skillSum('accueil')); changed=true;}
+  if(t>=S.lotsAt && !(auction&&!auction.done)){ refreshLots(); toast('Nouvelle vente aux enchères : 4 lots à découvrir.','',{label:'Voir',act:'tab',id:'achats'}); changed=true; }
+  if(onSale().length && t>=S.nextClientAt){ spawnClient(); S.lastClientAt=t; S.nextClientAt=t+rnd(18000,35000)/(1+.12*skillSum('accueil'))/(has('enseigne')?1.25:1); changed=true;}
   if(staffTick(t)) changed=true;
   if(marketTick(t)) changed=true;
+  if(orderTick(t)) changed=true;
   if(S.ads.length<2 && t>=S.nextAdAt){ S.ads.push(newAd()); S.nextAdAt=t+rnd(50000,90000); changed=true; }
   const na=S.ads.length; S.ads=S.ads.filter(a=>a.expiresAt>t); if(S.ads.length!==na) changed=true;
   const before=S.clients.length;
-  S.clients=S.clients.filter(c=>(c.expiresAt>t||(nego&&nego.clientId===c.id))&&carOf(c)&&carOf(c).status==='vente');
+  S.clients=S.clients.filter(c=>(c.expiresAt>t||c.handledBy||(nego&&nego.clientId===c.id))&&carOf(c)&&carOf(c).status==='vente');
   if(S.clients.length!==before)changed=true;
   S.returns=S.returns.filter(r=>{ if(t<r.at)return true;
     S.money-=r.refund; S.rep=clamp(S.rep-4,0,100); S.stats.profit-=r.refund;
     log(`Retour client : ${r.name} signale une panne sur la ${r.car}. Geste de ${eur(r.refund)}.`);
     toast(`Retour client sur la ${r.car} : −${eur(r.refund)}, réputation en baisse.`,'bad'); changed=true; return false;});
   auctionTick();
-  if(changed)commit(); else updateLive();
+  if(changed){ commit(); if(fiche && !S.cars.some(c=>c.uid===fiche)){ fiche=null; renderModal(); } else if(fiche && !typing()) renderModal(); }
+  else updateLive();
   if(auction&&!auction.done)renderModal();
 }
 function commit(){save(); render();}
@@ -929,12 +1194,14 @@ const imgOf=car=>`voiture-${car.modelId}-${car.color.s}.webp`;
 function stage(car,o={}){
   const m=model(car.modelId), src=imgOf(car);
   const dust=car.inspected?clamp((1-car.cond.carro)*.85,0,.75):.2;
-  return `<div class="stage ${o.scene||''}" style="--w:${m.w}%">
+  const link=o.link?` role="button" tabindex="0" data-act="fiche" data-id="${car.uid}" aria-label="Ouvrir la fiche de la ${esc(carName(car))}"`:'';
+  return `<div class="stage ${o.scene||''}${o.link?' is-link':''}" style="--w:${m.w}%"${link}>
     <div class="car refl" aria-hidden="true"><img src="${src}" alt=""></div>
     <div class="shade"></div>
     <div class="car"><img src="${src}" alt="${esc(carName(car)+', '+car.color.n)}" loading="lazy"><i class="dust" style="--m:url('${src}');opacity:${dust.toFixed(2)}"></i></div>
     ${o.num?`<span class="lotno glass"><small>Lot</small>${o.num}</span>`:o.tagL?`<span class="tag l glass">${o.tagL}</span>`:''}
     ${o.tagR?`<span class="tag glass">${o.tagR}</span>`:''}
+    ${matchesOrder(car)?`<span class="tag b">Commande de ${esc(S.order.name)}</span>`:''}
   </div>`;
 }
 const condColor=v=>v>=.7?'var(--good)':v>=.45?'var(--warn)':'var(--bad)';
@@ -946,38 +1213,96 @@ function head(car,right){
   return `<div class="title"><h3><span>${m.brand}</span>${m.name}</h3>${right||''}</div>
   <div class="meta">${car.year} · ${kmf(car.km)} · ${car.color.n}</div>`;
 }
+const pbar=(start,end)=>`<div class="progress"><i data-start="${start}" data-pend="${end}" style="width:${clamp((now()-start)/(end-start),0,1)*100}%"></i></div>`;
+function stars(n){return `<span class="stars" aria-label="${n} sur 5">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`}
 
 /* =====================================================================
    5. INTERFACE
    ===================================================================== */
-const TABS=[['objectifs','Objectifs'],['encheres','Enchères'],['stock','Stock'],['atelier','Atelier'],['showroom','Showroom'],['equipe','Équipe'],['profil','Profil']];
-let hiring=null;
+const TABS=[['achats','Achats'],['garage','Garage'],['showroom','Showroom'],['equipe','Équipe']];
+let hiring=null, recruit=null, fiche=null, todoOpen=false;
 function render(){
   document.body.classList.toggle('lv4',S.level>=4);
   document.getElementById('top').innerHTML=`
-    <div class="brand">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}<div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
+    <div class="brand"><button class="mebtn" data-act="tab" data-id="profil" aria-label="Ouvrir votre profil">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}</button><div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
       <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div></div>
     <div class="stats">
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
-      <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${lvl().parking}</b></div>
+      <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${capPark()}</b></div>
       ${fb.ok?(fb.user?`<button class="stat glass acct" data-act="tab" data-id="profil"><span>Compte</span><b>${esc(S.pseudo||'Joueur')}</b></button>`:`<button class="stat glass acct" data-act="acctOpen" data-id="login"><span>Compte</span><b>Se connecter</b></button>`):''}
     </div>`;
-  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${k==='showroom'&&S.clients.length?`<span class="pill">${S.clients.length}</span>`:''}${k==='objectifs'&&S.objs.some(o=>o.done)?`<span class="pill">${S.objs.filter(o=>o.done).length}</span>`:''}</button>`).join('');
-  document.getElementById('view').innerHTML=({encheres:viewLots,stock:viewStock,atelier:viewAtelier,showroom:viewShowroom,equipe:viewEquipe,profil:viewProfil,objectifs:viewObjectifs})[S.tab]();
+  const waiting=S.clients.filter(c=>!c.handledBy).length;
+  const pills={showroom:waiting, achats:S.order?1:0};
+  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${pills[k]?`<span class="pill">${pills[k]}</span>`:''}</button>`).join('');
+  const items=todoItems(), urgent=items.filter(i=>i.u).length;
+  document.getElementById('todoBtn').innerHTML=`<svg class="todo-ico" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="3" cy="5" r="1.4" fill="currentColor"/><circle cx="3" cy="10" r="1.4" fill="currentColor"/><circle cx="3" cy="15" r="1.4" fill="currentColor"/></svg><span class="todo-lbl">À faire</span>${urgent?`<span class="pill">${urgent}</span>`:''}`;
+  document.getElementById('todoBtn').setAttribute('aria-label',urgent?`À faire, ${urgent} action${urgent>1?'s':''}`:'À faire');
+  document.getElementById('todoBtn').setAttribute('aria-expanded',String(todoOpen));
+  const aside=document.getElementById('todo'); aside.innerHTML=todoHTML(items); aside.classList.toggle('open',todoOpen);
+  document.getElementById('scrim').classList.toggle('open',todoOpen);
+  document.getElementById('view').innerHTML=({achats:viewAchats,garage:viewGarage,showroom:viewShowroom,equipe:viewEquipe,profil:viewProfil}[S.tab]||viewAchats)();
 }
 
-function viewLots(){
-  return `${marketBanner()}<h2>Salle des <em>ventes</em></h2><p class="lead">De nouveaux lots arrivent au fil du temps. Une inspection à 150 € révèle l'état réel. Sans elle, vous enchérissez à l'aveugle.</p>
-  ${S.lots.length?`<div class="grid">${S.lots.map(l=>{const c=l.car;
+// --- Panneau « À faire » : tout ce qui demande votre attention, avec le bouton d'action
+function todoItems(){
+  const t=now(), items=[];
+  S.objs.filter(o=>o.done).forEach(o=>items.push({u:1,txt:'Objectif atteint',sub:o.label,btn:['Récupérer','claim',o.id]}));
+  const r=upgradeReqs(); if(r&&r.list.every(x=>x.ok)) items.push({u:1,txt:`Niveau ${S.level+1} disponible`,sub:`${LEVELS[S.level+1].name} · ${eur(r.u.cost)}`,btn:['Agrandir','upgrade','']});
+  if(S.order){
+    const m=S.cars.find(c=>matchesOrder(c)&&c.status!=='atelier');
+    items.push(m?{u:1,txt:`Vous avez la voiture de ${S.order.name}`,sub:`${carName(m)} · ${eur(r100(valueOf(m)*S.order.mult))}`,ends:S.order.endsAt,btn:['Livrer','deliver',m.uid]}
+      :{u:0,txt:`Commande de ${S.order.name}`,sub:orderLabel(S.order),ends:S.order.endsAt,btn:['Voir','tab','achats']});
+  }
+  S.clients.filter(c=>!c.handledBy).forEach(c=>{const car=carOf(c); if(!car)return;
+    items.push(c.persona==='decide'?{u:1,txt:`${c.name} veut la ${carName(car)}`,sub:`Au prix affiché, ${eur(c.offer)}`,ends:c.expiresAt,btn:['Vendre','buyDirect',c.id]}
+      :{u:1,txt:`${c.name} attend au showroom`,sub:`Propose ${eur(c.offer)} pour la ${carName(car)}`,ends:c.expiresAt,btn:['Recevoir','nego',c.id]});});
+  const ready=S.cars.filter(c=>c.status==='stock'&&!c.prepping);
+  ready.slice(0,3).forEach(c=>items.push({u:1,txt:`${carName(c)} sur le parking`,sub:needsRepair(c)?'À réparer ou à mettre en vente':'Prête à être mise en vente',btn:['Fiche','fiche',c.uid]}));
+  if(ready.length>3) items.push({u:0,txt:`Et ${ready.length-3} autre${ready.length-3>1?'s':''} sur le parking`,btn:['Garage','tab','garage']});
+  if(ateliersUsed()<capBays() && ready.some(needsRepair)) items.push({u:0,txt:'Un pont est libre',sub:'Des voitures attendent une réparation',btn:['Garage','tab','garage']});
+  if(S.staff.length&&S.nextPayAt&&S.money<payroll()) items.push({u:1,warn:1,txt:'Trésorerie trop basse pour la paie',sub:`${eur(payroll())} à verser`,ends:S.nextPayAt});
+  if(S.lotsAt-t<60000) items.push({u:0,txt:'Nouvelle vente aux enchères',ends:S.lotsAt,btn:['Achats','tab','achats']});
+  return items;
+}
+function todoHTML(items){
+  const se=SEASONS[S.monthIdx%4], ev=S.event?EVENTS[S.event-1]:null;
+  const fmt=o=>o.type==='profit'?`${eur(o.progress)} / ${eur(o.target)}`:o.type==='bigMargin'?(o.done?'Fait':'Pas encore'):`${o.progress} / ${o.target}`;
+  return `<div class="todo-head"><h3>À faire</h3><button class="btn ghost todo-x" data-act="todoClose" aria-label="Fermer le panneau">Fermer</button></div>
+  ${items.length?`<ul class="todo-list">${items.map(i=>`<li class="${i.warn?'warn':''}"><div><b>${esc(i.txt)}</b>${i.sub?`<small>${esc(i.sub)}</small>`:''}${i.ends?`<small>Reste <span class="num" data-ends="${i.ends}">${mmss(i.ends-now())}</span></small>`:''}</div>${i.btn?`<button class="btn sm ${i.u?'main':''}" data-act="${i.btn[1]}" data-id="${i.btn[2]}">${i.btn[0]}</button>`:''}</li>`).join('')}</ul>`
+    :`<p class="meta" style="margin:10px 0 0">Rien d'urgent. C'est le moment de passer aux enchères.</p>`}
+  <h4>Objectifs</h4>
+  <ul class="mini-objs">${S.objs.map(o=>`<li class="${o.done?'is-done':''}"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><span>${esc(o.label)}</span><b class="num">+${eur(o.money)}</b></div>
+    <div class="progress"><i style="width:${Math.round(o.progress/o.target*100)}%"></i></div>
+    <div class="row" style="justify-content:space-between"><small class="num">${fmt(o)}</small>${o.done?`<button class="btn sm main" data-act="claim" data-id="${o.id}">Récupérer</button>`:`<button class="btn sm ghost" data-act="skipObj" data-id="${o.id}">Changer · 500 €</button>`}</div></li>`).join('')}</ul>
+  ${S.staff.length?`<h4>Équipe en direct</h4><ul class="mini-emps">${S.staff.map(e=>{const tk=empTask(e);return `<li>${portrait(empSrc(e.role,e.look),'face sm',e.name)}<div><b>${esc(e.name.split(' ')[0])}</b><small>${esc(tk.label)}</small>${tk.end?pbar(tk.start,tk.end):''}</div></li>`}).join('')}</ul>`:''}
+  <h4>Marché</h4>
+  <div class="mini-market"><div><b>${se.name}</b> ${fxChips(se.fx)}</div>${ev?`<div><b>${ev.name}</b> ${fxChips(ev.fx)}<small>${ev.text}</small></div>`:''}<small>Mois suivant dans <span class="num" data-ends="${S.nextMonthAt}">${mmss(S.nextMonthAt-now())}</span></small></div>`;
+}
+
+// --- Achats : enchères, annonces de particuliers et commande spéciale
+function orderCard(){
+  const o=S.order; if(!o) return '';
+  const have=S.cars.filter(c=>matchesOrder(c)&&c.status!=='atelier');
+  return `<section class="order glass"><div><span class="eyebrow">Commande spéciale</span><b>${esc(o.name)} cherche une ${esc(orderLabel(o))}</b>
+    <small>Il paiera ${Math.round(o.mult*100)} % de la valeur de la voiture. Reste <span class="num" data-ends="${o.endsAt}">${mmss(o.endsAt-now())}</span>.</small></div>
+    <div class="row">${have.length?have.map(c=>`<button class="btn main" data-act="deliver" data-id="${c.uid}">Livrer la ${carName(c)} · ${eur(r100(valueOf(c)*o.mult))}</button>`).join(''):'<span class="meta">Surveillez les enchères et les annonces : la voiture recherchée y passera peut-être.</span>'}</div></section>`;
+}
+function lotRange(c){
+  if(has('argus')){ const ac=avgCond(c.cond); return [valueOf(c,clamp(ac-.08,0,1)),valueOf(c,clamp(ac+.08,0,1))]; }
+  return [valueOf(c,.4),valueOf(c,.9)];
+}
+function viewAchats(){
+  return `${orderCard()}<h2>Salle des <em>ventes</em></h2><p class="lead">Quatre nouveaux lots toutes les 5 minutes. Prochaine vente dans <b class="num" data-ends="${S.lotsAt}">${mmss(S.lotsAt-now())}</b>. Une inspection à 150 € révèle l'état réel.</p>
+  ${S.lots.length?`<div class="grid">${S.lots.map(l=>{const c=l.car, rg=lotRange(c);
     return `<article class="card glass">${stage(c,{num:l.id,tagR:c.inspected?'Inspecté':'Non inspecté'})}
       <div class="body">${head(c)}
       ${c.inspected?condsHTML(c)+`<div class="meta">Valeur estimée <b class="num" style="color:var(--fg)">${eur(valueOf(c))}</b></div>`
-        :`<div class="unknown">État inconnu. Valeur entre <b class="num">${eur(valueOf(c,.4))}</b> et <b class="num">${eur(valueOf(c,.9))}</b> selon l'état.</div>`}
+        :`<div class="unknown">État inconnu. Valeur entre <b class="num">${eur(rg[0])}</b> et <b class="num">${eur(rg[1])}</b>${has('argus')?' selon la cote':' selon l\'état'}.</div>`}
       <div class="row end"><button class="btn main" data-act="bid" data-id="${l.id}">Enchérir <small>dès ${eur(l.start)}</small></button>
       ${c.inspected?'':`<button class="btn" data-act="inspect" data-id="${l.id}">Inspecter <small>150 €</small></button>`}</div>
       </div></article>`}).join('')}</div>`
-  :`<div class="empty">Aucun lot pour le moment. Le prochain arrive dans <span class="num" data-ends="${S.nextLotAt}">${mmss(S.nextLotAt-now())}</span>.</div>`}
+  :`<div class="empty">Tous les lots sont partis. Nouvelle vente dans <span class="num" data-ends="${S.lotsAt}">${mmss(S.lotsAt-now())}</span>.</div>`}
   <h2>Annonces de <em>particuliers</em></h2><p class="lead">Des prix bas, sans enchère. Mais certains vendeurs cachent un compteur trafiqué ou un accident. L'inspection à 150 € vous protège.</p>
   ${S.ads.length?`<div class="grid">${S.ads.map(a=>{const c=a.car;
     const flag=a.checked?(a.scam?`<div class="unknown warn">${a.scam==='km'?`Compteur trafiqué : la voiture a en réalité ${kmf(a.real.km)}.`:'Accident caché : carrosserie et mécanique abîmées.'}</div>`:`<div class="unknown ok">Inspection faite, l'annonce est honnête.</div>`):'';
@@ -991,96 +1316,88 @@ function viewLots(){
       </div></article>`}).join('')}</div>`
   :`<div class="empty">Aucune annonce pour l'instant. La prochaine arrive dans <span class="num" data-ends="${S.nextAdAt}">${mmss(S.nextAdAt-now())}</span>.</div>`}`;
 }
-function viewStock(){
-  if(!S.cars.length)return `<h2>Votre <em>stock</em></h2><div class="empty">Votre parking est vide. Passez par la salle des ventes pour acheter votre première voiture.</div>`;
-  const st={stock:'Sur le parking',atelier:'À l’atelier',vente:'En vente'};
-  return `${marketBanner()}<h2>Votre <em>stock</em></h2><p class="lead">Fixez un prix et exposez la voiture au showroom, ou passez-la d'abord à l'atelier pour augmenter sa valeur.</p>
-  <div class="grid">${S.cars.map(c=>`<article class="card glass">${stage(c,{tagL:st[c.status],tagR:c.status==='vente'?eur(c.ask):''})}
-    <div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
-    ${condsHTML(c)}
-    <div class="kv"><span>Prix payé et frais</span><b class="num">${eur(c.paid+c.spent)}</b><span>Valeur actuelle</span><b class="num">${eur(valueOf(c))}</b></div>
-    ${c.status==='stock'?`<div class="row end"><label class="field" for="ask-${c.uid}"><input id="ask-${c.uid}" data-draft="ask-${c.uid}" inputmode="numeric" value="${esc(drafts['ask-'+c.uid]??defaultAsk(c))}"><span>€</span></label>
-      <button class="btn main" data-act="list" data-id="${c.uid}">Mettre en vente</button>
-      <button class="btn ghost" data-act="tab" data-id="atelier">Atelier</button></div>`
-    :c.status==='vente'?`<div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div>`
-    :`<div class="row end meta">En réparation, fin dans <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></div>`}
-    </div></article>`).join('')}</div>`;
+
+// --- Garage : les ponts, toutes les voitures avec leur action principale, et les améliorations
+function carStatusLine(c){
+  if(c.status==='atelier') return `<div class="status">Sur le pont : ${COMPS[c.job.k].label.toLowerCase()}, fin dans <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></div>${pbar(c.job.start,c.job.endsAt)}`;
+  if(c.prepping){ const p=S.staff.find(e=>e.id===c.prepping); const tk=p&&p.task; return `<div class="status">Préparation par ${esc(p?p.name.split(' ')[0]:'l’équipe')}…</div>${tk?pbar(tk.start,tk.endsAt):''}`; }
+  if(c.status==='vente'){ const g=chance(c,c.ask); return `<div class="status">En vente à <b class="num" style="color:var(--fg)">${eur(c.ask)}</b> · <span class="chance ${g.cls}">${g.label}</span></div>`; }
+  return `<div class="status">Sur le parking${c.prepPending?' · en attente de préparation':''}</div>`;
 }
-function viewAtelier(){
-  const busy=S.cars.filter(c=>c.status==='atelier'), bays=[];
-  for(let i=0;i<lvl().ateliers;i++){const c=busy[i];
-    const mec=staffOf('mecano')[i];
-    bays.push(`<div class="bay glass"><div class="lbl"><span class="who">${mec?portrait(empSrc('mecano',mec.look),'face sm',mec.name):''}Pont ${i+1}</span>${c?`<b class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</b>`:'<span>Libre</span>'}</div>
-      ${c?`${stage(c,{scene:'atelier'})}<div class="in"><b>${carName(c)}</b><div class="meta">${COMPS[c.job.k].label} en cours</div><div class="progress"><i data-start="${c.job.start}" data-pend="${c.job.endsAt}" style="width:${clamp((now()-c.job.start)/(c.job.endsAt-c.job.start),0,1)*100}%"></i></div></div>`
-      :`<div class="free"><span>Pont libre</span></div>`}</div>`);}
-  const todo=S.cars.filter(c=>c.status==='stock');
-  return `<h2>L'<em>atelier</em></h2><p class="lead">Chaque pont traite une réparation à la fois. Remettre la mécanique à neuf évite les retours clients, la carrosserie fait grimper la valeur.${staffOf('mecano').length?` Vos mécaniciens réduisent les délais de ${Math.round((1-mecaFactor())*100)} %.`:''}</p>
+function carActions(c){
+  const o=S.order&&matchesOrder(c)&&c.status!=='atelier'?`<button class="btn main" data-act="deliver" data-id="${c.uid}">Livrer à ${esc(S.order.name)}</button>`:'';
+  if(c.status==='atelier') return `<div class="row end">${o}<button class="btn" data-act="fiche" data-id="${c.uid}">Fiche</button></div>`;
+  if(c.status==='vente') return `<div class="row end">${o}<button class="btn" data-act="fiche" data-id="${c.uid}">Fiche et prix</button><button class="btn ghost" data-act="unlist" data-id="${c.uid}">Retirer</button></div>`;
+  return `<div class="row end">${o}<button class="btn ${o?'':'main'}" data-act="quickList" data-id="${c.uid}">Vendre à ${eur(suggested(c))}</button><button class="btn" data-act="fiche" data-id="${c.uid}">${needsRepair(c)?'Réparer, fixer le prix':'Fixer le prix'}</button></div>`;
+}
+function viewGarage(){
+  const busy=S.cars.filter(c=>c.status==='atelier'), mecs=staffOf('mecano'), bays=[];
+  for(let i=0;i<capBays();i++){ const c=busy[i], mec=mecs[i];
+    bays.push(`<div class="bayc glass">${c?`<img class="thumb" src="${imgOf(c)}" alt="">`:`<div class="thumb empty-thumb" aria-hidden="true"></div>`}
+      <div class="bay-txt"><span class="eyebrow">${mec?portrait(empSrc('mecano',mec.look),'face xs',mec.name):''}Pont ${i+1}${mec?` · ${esc(mec.name.split(' ')[0])}`:''}</span>
+      ${c?`<b>${carName(c)}</b><small>${COMPS[c.job.k].label} · <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></small>${pbar(c.job.start,c.job.endsAt)}`:`<b>Libre</b><small>Ouvrez la fiche d'une voiture pour la réparer.</small>`}</div></div>`); }
+  const order={vente:1,stock:0,atelier:2};
+  const cars=[...S.cars].sort((a,b)=>(order[a.status]-order[b.status])||(a.uid-b.uid));
+  const avail=UPG.filter(u=>!has(u.id));
+  return `<h2>Votre <em>garage</em></h2><p class="lead">Parking ${parkingUsed()} / ${capPark()} · ${ateliersUsed()} pont${capBays()>1?'s':''} occupé${ateliersUsed()>1?'s':''} sur ${capBays()}${staffOf('mecano').length?` · réparations ${Math.round((1-mecaFactor())*100)} % plus rapides`:''}. Touchez une voiture pour ouvrir sa fiche.</p>
   <div class="bays">${bays.join('')}</div>
-  <h2>À préparer</h2>
-  ${todo.length?`<div class="grid">${todo.map(c=>`<article class="card glass">${stage(c)}<div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
-    <div class="repairs">${Object.entries(COMPS).map(([k,x])=>{
-      if(c.cond[k]>=.9)return `<div class="btn" style="opacity:.5;cursor:default"><span>${x.label}</span><small>Bon état · ${Math.round(c.cond[k]*100)} %</small></div>`;
-      const gain=valueOf(c,avgCond({...c.cond,[k]:.95}))-valueOf(c);
-      return `<button class="btn" data-act="repair" data-id="${c.uid}" data-k="${k}"><span>${x.label} <small style="color:${condColor(c.cond[k])}">${Math.round(c.cond[k]*100)} %</small></span><small class="num">${eur(repairCost(c,k))} · ${Math.round(repairTime(c,k)/1000)} s · +${eur(gain)}</small></button>`}).join('')}</div>
-    </div></article>`).join('')}</div>`:`<div class="empty">Aucune voiture disponible sur le parking.</div>`}`;
+  ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{link:1,scene:c.status==='atelier'?'atelier':c.status==='vente'?'expo':''})}
+    <div class="body">${head(c,`<span class="price num">${eur(valueOf(c))}</span>`)}
+    ${carStatusLine(c)}${condsHTML(c)}${carActions(c)}</div></article>`).join('')}</div>`
+  :`<div class="empty">Votre parking est vide. Passez par l'onglet Achats pour trouver votre première voiture.</div>`}
+  <h2>Améliorer le <em>garage</em></h2><p class="lead">Des équipements à acheter une fois pour toutes.</p>
+  <div class="upgs">${UPG.map(u=>{const own=has(u.id), locked=S.level<u.lvl;
+    return `<div class="upg glass ${own?'owned':''}"><b>${u.name}</b><p>${u.desc}</p>
+      <div class="row end" style="justify-content:space-between">${own?'<span class="ok">Installé</span>':locked?`<span class="meta">Niveau ${u.lvl} requis</span>`:`<span class="price num">${eur(u.price)}</span><button class="btn ${S.money>=u.price?'main':''}" data-act="buyUpg" data-id="${u.id}" ${S.money<u.price?'disabled':''}>Acheter</button>`}</div></div>`}).join('')}</div>
+  ${avail.length?'':`<p class="meta">Toutes les améliorations sont installées.</p>`}`;
 }
+
+// --- Showroom : les clients, avec les ventes de l'équipe en direct
 function viewShowroom(){
   const cars=onSale();
-  return `${marketBanner()}<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.</p>
-  ${staffOf('vendeur').length?`<p class="meta" style="margin:-8px 0 16px">Vos vendeurs prennent en charge les clients qui attendent plus de 20 secondes.</p>`:''}
-  ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c);return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>${c.persona==='decide'?`Veut la ${carName(car)} au prix affiché, <b class="num">${eur(c.offer)}</b>`:`Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b>`}${c.trade?` · a une ${carName(c.trade.car)} à reprendre`:''}</small></div>
-    <div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span>${c.persona==='decide'?`<button class="btn main" data-act="buyDirect" data-id="${c.id}">Vendre à ${eur(c.offer)}</button>`:`<button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button>`}</div></div>`}).join('')}</div>`
-  :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(Math.max(0,S.nextClientAt-now()))}</span>.`:'Exposez une voiture depuis le stock pour attirer des clients.'}</div>`}
+  return `<h2>Clients au <em>showroom</em></h2><p class="lead">Chaque client a un budget caché et une patience limitée. Trop gourmand, il part. Trop cher payé, votre réputation en prend un coup.${staffOf('vendeur').length?' Vos vendeurs prennent en charge les clients qui attendent plus de 20 secondes.':''}</p>
+  ${S.clients.length?`<div class="clients">${S.clients.map(c=>{const car=carOf(c); if(!car)return '';
+    const v=c.handledBy&&S.staff.find(e=>e.id===c.handledBy), tk=v&&v.task;
+    return `<div class="client glass"><div class="who">${c.name}<span class="persona">${PERSONAS[c.persona].label}</span><small>${c.persona==='decide'?`Veut la ${carName(car)} au prix affiché, <b class="num">${eur(c.offer)}</b>`:`Intéressé par la ${carName(car)} · propose <b class="num">${eur(c.offer)}</b>`}${c.trade?` · a une ${carName(c.trade.car)} à reprendre`:''}</small></div>
+    ${v?`<div class="handled">${portrait(empSrc('vendeur',v.look),'face sm',v.name)}<div style="flex:1;min-width:0"><small class="meta">${esc(v.name.split(' ')[0])} négocie…</small>${tk?pbar(tk.start,tk.endsAt):''}</div></div>`
+      :`<div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span>${c.persona==='decide'?`<button class="btn main" data-act="buyDirect" data-id="${c.id}">Vendre à ${eur(c.offer)}</button>`:`<button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button>`}</div>`}</div>`}).join('')}</div>`
+  :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(Math.max(0,S.nextClientAt-now()))}</span>.`:'Exposez une voiture depuis le garage pour attirer des clients.'}</div>`}
   <h2>En <em>exposition</em></h2>
-  ${cars.length?`<div class="grid">${cars.map(c=>`<article class="card glass">${stage(c,{tagL:'Exposée',scene:'expo'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="meta">Valeur estimée ${eur(valueOf(c))}</div><div class="row end"><button class="btn" data-act="unlist" data-id="${c.uid}">Retirer de la vente</button></div></div></article>`).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
+  ${cars.length?`<div class="grid">${cars.map(c=>{const g=chance(c,c.ask);return `<article class="card glass">${stage(c,{link:1,tagL:'Exposée',scene:'expo'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="status">Valeur ${eur(valueOf(c))} · <span class="chance ${g.cls}">${g.label}</span></div><div class="row end"><button class="btn" data-act="fiche" data-id="${c.uid}">Changer le prix</button><button class="btn ghost" data-act="unlist" data-id="${c.uid}">Retirer</button></div></div></article>`}).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
 }
-function viewObjectifs(){
-  const r=upgradeReqs();
-  const fmt=o=>o.type==='profit'?`${eur(o.progress)} / ${eur(o.target)}`:o.type==='bigMargin'?(o.done?'Fait':'Pas encore'):`${o.progress} / ${o.target}`;
-  return `<h2>Vos <em>objectifs</em></h2><p class="lead">Trois défis en cours. Chacun rapporte de l'argent et de la réputation, de quoi monter de niveau plus vite. Un objectif qui ne vous plaît pas peut être changé pour 500 €.</p>
-  <div class="objs">${S.objs.map(o=>`<div class="obj glass ${o.done?'is-done':''}">
-    <div class="obj-top"><b>${esc(o.label)}</b><span class="reward"><span class="num">+${eur(o.money)}</span><span>+${o.rep} réputation</span></span></div>
-    <div class="progress"><i style="width:${Math.round(o.progress/o.target*100)}%"></i></div>
-    <div class="row" style="justify-content:space-between"><span class="meta num">${fmt(o)}</span>
-      ${o.done?`<button class="btn main" data-act="claim" data-id="${o.id}">Récupérer la récompense</button>`:`<button class="btn ghost" data-act="skipObj" data-id="${o.id}">Changer <small>500 €</small></button>`}</div>
-  </div>`).join('')}</div>
-  <p class="meta" style="margin-top:14px">Objectifs accomplis depuis le début : <b class="num" style="color:var(--fg)">${S.objDone}</b></p>
-  ${r?`<h2>Prochain niveau : <em>${LEVELS[S.level+1].name}</em></h2>
-  <div class="panel glass" style="max-width:560px">${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
-    <p class="meta">Agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].unlock}.</p>
-    <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>Agrandir le garage</button></div>`:''}`;
-}
-function stars(n){return `<span class="stars" aria-label="${n} sur 5">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`}
+
+// --- Équipe : un emplacement par poste, avec la personne et sa tâche en cours
 function roleEffect(r){
-  if(!staffOf(r).length)return 'Personne à ce poste';
-  return {vendeur:`${staffOf('vendeur').length} vendeur${staffOf('vendeur').length>1?'s':''} au showroom`,
+  if(!staffOf(r).length)return '';
+  return {vendeur:`${staffOf('vendeur').reduce((a,e)=>a+(e.sales||0),0)} ventes conclues`,
     mecano:`Réparations ${Math.round((1-mecaFactor())*100)} % plus rapides`,
-    prepa:`+${bestSkill('prepa')*3} pts carrosserie, +${bestSkill('prepa')*4} pts intérieur à l'achat`,
-    accueil:`+${staffOf('accueil').length} client${staffOf('accueil').length>1?'s':''} simultané, patience +${skillSum('accueil')*30} s`}[r];
+    prepa:`Jusqu'à +${bestSkill('prepa')*3} pts de carrosserie par voiture`,
+    accueil:`+${staffOf('accueil').length} client simultané, patience +${skillSum('accueil')*30} s`}[r];
 }
 function viewEquipe(){
   if(!staffSlots()){
-    const r=upgradeReqs();
-    return `<h2>Votre <em>équipe</em></h2><div class="locked glass"><b>Disponible au niveau 3</b><p class="meta">Agrandissez jusqu'au garage multimarque pour recruter vendeurs, mécaniciens, préparateurs et réceptionnistes.${r&&S.level===2?' Les conditions sont dans l’onglet Profil.':''}</p></div>`;
+    return `<h2>Votre <em>équipe</em></h2><div class="locked glass"><b>Disponible au niveau 3</b><p class="meta">Agrandissez jusqu'au garage multimarque pour recruter vendeurs, mécaniciens, préparateurs et réceptionnistes.</p></div>`;
   }
-  return `<h2>Votre <em>équipe</em></h2><p class="lead">Chaque employé travaille pour vous en continu. Les salaires tombent à la fin de chaque mois de jeu (5 minutes).</p>
-  <div class="payday glass"><span><b class="num">${S.staff.length} / ${staffSlots()}</b> <span class="meta">postes occupés</span></span>
-    <span><span class="meta">Masse salariale</span> <b class="num">${eur(payroll())}</b> <span class="meta">/ mois</span></span>
-    <span><span class="meta">Prochaine paie</span> <b class="num">${S.staff.length&&S.nextPayAt?`<span data-ends="${S.nextPayAt}">${mmss(S.nextPayAt-now())}</span>`:'—'}</b></span></div>
-  <div class="roles">${Object.entries(ROLES).map(([k,r])=>`<div class="rolecard glass"><h4>${r.label}</h4><p>${r.desc}</p><div class="eff">${roleEffect(k)}</div></div>`).join('')}</div>
-  ${S.staff.length?`<div class="staff">${S.staff.map(e=>`<div class="emp glass"><div class="top">${portrait(empSrc(e.role,e.look),'face',e.name)}<div><span class="role">${ROLES[e.role].label}</span><b>${esc(e.name)}</b>${stars(e.skill)}</div></div>
-    <div class="kv"><span>Salaire</span><b class="num">${eur(e.salary)} / mois</b>${e.role==='vendeur'?`<span>Ventes conclues</span><b class="num">${e.sales}</b>`:''}</div>
-    <div class="row">${drafts.confirmFire===e.id?`<span class="meta">Indemnité de ${eur(e.salary)}.</span><button class="btn danger" data-act="fire" data-id="${e.id}">Confirmer</button><button class="btn ghost" data-act="fire0">Annuler</button>`
-      :`<button class="btn ghost danger" data-act="fire1" data-id="${e.id}">Licencier</button>`}</div></div>`).join('')}</div>`
-    :`<div class="empty" style="margin-bottom:8px">Personne pour l'instant. Choisissez parmi les candidatures ci-dessous.</div>`}
-  <h2>Candidatures</h2><p class="lead">De nouveaux profils arrivent chaque mois, dans <span class="num" data-ends="${S.nextCandAt}">${mmss(S.nextCandAt-now())}</span>. L'embauche coûte une prime d'un demi-salaire.</p>
-  <div class="staff">${S.candidates.map(c=>`<div class="emp glass"><div class="top">${portrait(empSrc(c.role,c.look),'face',c.name)}<div><span class="role">${ROLES[c.role].label}</span><b>${esc(c.name)}</b>${stars(c.skill)}</div></div>
-    <div class="kv"><span>Salaire demandé</span><b class="num">${eur(c.salary)} / mois</b><span>Prime d'embauche</span><b class="num">${eur(Math.round(c.salary*.5))}</b></div>
-    <div class="row"><button class="btn main" data-act="hireOpen" data-id="${c.id}" ${S.staff.length>=staffSlots()?'disabled':''}>Recruter</button></div></div>`).join('')}</div>`;
+  const total=Object.keys(ROLES).reduce((a,r)=>a+Math.max(postsOf(r),staffOf(r).length),0);
+  return `<h2>Votre <em>équipe</em></h2>
+  <div class="teamline"><span><b class="num">${S.staff.length} / ${total}</b> postes occupés</span><span>Salaires <b class="num">${eur(payroll())}</b> par mois</span>${S.staff.length&&S.nextPayAt?`<span>Prochaine paie <b class="num" data-ends="${S.nextPayAt}">${mmss(S.nextPayAt-now())}</b></span>`:''}<span>Nouvelles candidatures <b class="num" data-ends="${S.nextCandAt}">${mmss(S.nextCandAt-now())}</b></span></div>
+  ${Object.entries(ROLES).map(([r,R])=>{const emps=staffOf(r), slots=Math.max(postsOf(r),emps.length), eff=roleEffect(r);
+    const cells=[];
+    for(let i=0;i<slots;i++){ const e=emps[i];
+      if(e){ const tk=empTask(e);
+        cells.push(`<div class="emp glass"><div class="top">${portrait(empSrc(e.role,e.look),'face',e.name)}<div><b>${esc(e.name)}</b>${stars(e.skill)}<small class="meta">${eur(e.salary)} par mois</small></div></div>
+          <div class="task"><small>En ce moment</small><div>${esc(tk.label)}</div>${tk.end?pbar(tk.start,tk.end):''}</div>
+          <div class="row">${drafts.confirmFire===e.id?`<span class="meta">Indemnité de ${eur(e.salary)}.</span><button class="btn danger" data-act="fire" data-id="${e.id}">Confirmer</button><button class="btn ghost" data-act="fire0">Annuler</button>`:`<button class="btn ghost danger" data-act="fire1" data-id="${e.id}">Licencier</button>`}</div></div>`);
+      } else { const n=S.candidates.filter(c=>c.role===r).length;
+        cells.push(`<div class="slot-empty"><b>Poste libre</b><span class="meta">${n} candidature${n>1?'s':''} ce mois-ci</span><button class="btn main" data-act="recruit" data-id="${r}" ${n?'':'disabled'}>Recruter</button></div>`); }
+    }
+    return `<section class="post"><div class="post-head"><h3>${R.label}${slots>1?'s':''}</h3><p>${R.desc}</p>${eff?`<span class="chip up">${eff}</span>`:''}</div><div class="slots">${cells.join('')}</div></section>`;}).join('')}`;
 }
+
 function viewProfil(){
   const r=upgradeReqs();
-  return `<h2>Votre <em>affaire</em></h2>
+  return `<div class="row" style="margin-top:22px"><button class="btn" data-act="tab" data-id="garage">Retour au garage</button></div>
+  <h2>Votre <em>affaire</em></h2>
   <div class="cols">
     ${acctPanel()}
     <section class="panel glass"><h3>Votre avatar</h3>
@@ -1093,6 +1410,7 @@ function viewProfil(){
         <span>Voitures vendues</span><b class="num">${S.stats.sold}</b>
         <span>Atelier et frais</span><b class="num">${eur(S.stats.spent)}</b>
         <span>Marge cumulée</span><b class="num" style="color:${S.stats.profit>=0?'var(--good)':'var(--bad)'}">${eur(S.stats.profit)}</b>
+        <span>Objectifs accomplis</span><b class="num">${S.objDone}</b>
       </div></section>
     <section class="panel glass"><h3>${r?`Prochain niveau : ${LEVELS[S.level+1].name}`:'Niveau maximum du prototype'}</h3>
       ${r?`${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
@@ -1110,6 +1428,42 @@ function viewProfil(){
   </div>`;
 }
 
+// --- Fiche voiture : tout au même endroit
+function ficheHTML(car){
+  const v=valueOf(car), m=model(car.modelId), fx=Math.round((marketFx(m.type)-1)*100);
+  const bayFree=ateliersUsed()<capBays(), p=priceOf(car.uid);
+  const st={stock:'Sur le parking',atelier:'Sur le pont',vente:`En vente · ${eur(car.ask||0)}`}[car.status];
+  const canEdit=car.status==='stock'||car.status==='vente';
+  const o=S.order&&matchesOrder(car)&&car.status!=='atelier';
+  return `<div class="overlay"><div class="modal wide" role="dialog" aria-label="Fiche de la ${esc(carName(car))}">
+    ${stage(car,{scene:car.status==='atelier'?'atelier':car.status==='vente'?'expo':'',tagL:st})}
+    <div class="inner">
+      ${head(car,`<span class="price num">${eur(v)}</span>`)}
+      ${o?`<div class="order-inline"><span>${esc(S.order.name)} veut cette voiture et paiera <b class="num">${eur(r100(v*S.order.mult))}</b>.</span><button class="btn main" data-act="deliver" data-id="${car.uid}">Livrer</button></div>`:''}
+      <div class="fiche-grid">
+        <section><h4>État et réparations</h4>
+          ${car.status==='atelier'?`<div class="status">${COMPS[car.job.k].label} en cours, fin dans <span class="num" data-ends="${car.job.endsAt}">${mmss(car.job.endsAt-now())}</span></div>${pbar(car.job.start,car.job.endsAt)}`:''}
+          ${car.prepping?`<div class="status">Préparation en cours par l'équipe.</div>`:''}
+          <div class="comps">${Object.entries(COMPS).map(([k,x])=>{const val=car.cond[k], gain=valueOf(car,avgCond({...car.cond,[k]:.95}))-v;
+            return `<div class="comp"><div class="row" style="justify-content:space-between"><span>${x.label}</span><span class="num" style="color:${condColor(val)}">${Math.round(val*100)} %</span></div>
+              <div class="bar"><i style="width:${val*100}%;background:${condColor(val)}"></i></div>
+              ${val<.9&&canEdit?`<button class="btn sm" data-act="repair" data-id="${car.uid}" data-k="${k}" ${bayFree?'':'disabled'}>Réparer · ${eur(repairCost(car,k))} · ${Math.round(repairTime(car,k)/1000)} s · valeur +${eur(gain)}</button>`:''}</div>`}).join('')}</div>
+          ${canEdit&&needsRepair(car)&&!bayFree?`<p class="meta">Tous les ponts sont occupés pour le moment.</p>`:''}
+          ${car.status==='vente'&&needsRepair(car)?`<p class="meta">Pendant une réparation, la voiture quitte le showroom, puis y revient au même prix.</p>`:''}
+        </section>
+        <section><h4>Prix de vente</h4>
+          <div class="kv"><span>Payé et frais</span><b class="num">${eur(car.paid+car.spent)}</b><span>Valeur actuelle</span><b class="num">${eur(v)}</b><span>Cote des ${TYPE_LABEL[m.type]}</span><b class="num" style="color:${fx>0?'var(--good)':fx<0?'var(--bad)':'var(--fg)'}">${fx>0?'+':fx<0?'−':''}${Math.abs(fx)} %</b><span>Prix conseillé</span><b class="num">${eur(suggested(car))}</b></div>
+          ${canEdit?`<div class="row" style="margin-top:12px"><label class="field" for="ask-${car.uid}"><input id="ask-${car.uid}" data-draft="ask-${car.uid}" inputmode="numeric" value="${esc(String(p))}" aria-label="Prix de vente"><span>€</span></label><button class="btn ghost sm" data-act="suggest" data-id="${car.uid}">Prix conseillé</button></div>
+          <div id="gauge-${car.uid}" style="margin-top:12px">${gaugeInner(car,p)}</div>
+          <div class="row" style="margin-top:12px">${car.status==='vente'?`<button class="btn main" data-act="list" data-id="${car.uid}">Changer le prix</button><button class="btn ghost" data-act="unlist" data-id="${car.uid}">Retirer de la vente</button>`:`<button class="btn main" data-act="list" data-id="${car.uid}">Mettre en vente</button>`}</div>`
+          :`<p class="meta">Le prix pourra être fixé à la fin de la réparation.</p>`}
+        </section>
+      </div>
+      <section><h4>Historique</h4>${(car.hist||[]).length?`<ul class="hist">${[...car.hist].reverse().map(h=>`<li><time>${new Date(h.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(h.t)}</span>${h.v?`<b class="num">${eur(h.v)}</b>`:''}</li>`).join('')}</ul>`:'<p class="meta">Pas encore d’historique.</p>'}</section>
+      <div class="row"><button class="btn" data-act="ficheClose">Fermer</button></div>
+    </div></div></div>`;
+}
+
 function renderModal(){
   const m=document.getElementById('modal');
   if(auction){
@@ -1119,7 +1473,7 @@ function renderModal(){
       <div class="inner">${head(car)}
       ${a.done?(a.result==='win'?`<div class="quote">Adjugée pour ${eur(a.price)}. Elle vous attend sur le parking.</div>`
         :`<div class="quote">${a.leader==='rival'?`Adjugée à ${esc(a.rival)} pour ${eur(a.price)}.`:'Aucune offre, le lot est retiré.'}</div>`)
-        +`<div class="row"><button class="btn main" data-act="closeModal">Fermer</button>${a.result==='win'?'<button class="btn" data-act="goStock">Voir le stock</button>':''}</div>`
+        +`<div class="row">${a.result==='win'?`<button class="btn main" data-act="ficheFromAuction" data-id="${car.uid}">Ouvrir la fiche</button>`:''}<button class="btn ${a.result==='win'?'':'main'}" data-act="closeModal">Fermer</button></div>`
       :`<div class="row" style="justify-content:space-between;align-items:flex-end">
           <div><div class="meta">Enchère actuelle</div><div class="bigprice num">${eur(a.price)}</div></div>
           <div style="text-align:right"><div class="meta">Clôture</div><div class="timer num ${left<4000?'hot':''}">${mmss(left)}</div></div></div>
@@ -1158,17 +1512,28 @@ function renderModal(){
     </form></div></div>`;
     return;
   }
+  if(recruit){
+    const r=recruit, list=S.candidates.filter(c=>c.role===r);
+    m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Recrutement"><div class="inner">
+      <div class="quote" style="font-style:normal">Recruter : ${ROLES[r].label.toLowerCase()}</div>
+      <p class="meta" style="margin:0">${ROLES[r].desc} L'embauche coûte une prime d'un demi-salaire. Nouvelles candidatures dans <span class="num" data-ends="${S.nextCandAt}">${mmss(S.nextCandAt-now())}</span>.</p>
+      ${list.length?`<div class="cands">${list.map(c=>`<div class="cand">${portrait(empSrc(c.role,c.look),'face',c.name)}<div style="flex:1;min-width:0"><b>${esc(c.name)}</b>${stars(c.skill)}<small class="meta">${eur(c.salary)} par mois · prime ${eur(Math.round(c.salary*.5))}</small></div><button class="btn main" data-act="hireOpen" data-id="${c.id}">Choisir</button></div>`).join('')}</div>`
+        :'<p class="meta">Aucune candidature pour ce poste ce mois-ci.</p>'}
+      <div class="row"><button class="btn ghost" data-act="recruitClose">Annuler</button></div>
+    </div></div></div>`;
+    return;
+  }
   if(hiring){
     const c=S.candidates.find(x=>x.id===hiring);
     if(!c){hiring=null; m.innerHTML=''; return;}
     const sel=drafts.look??c.look, fee=Math.round(c.salary*.5);
     m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Recrutement"><div class="inner">
-      <div class="row" style="gap:16px">${portrait(empSrc(c.role,sel),'face lg',c.name)}<div><span class="role" style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)">${ROLES[c.role].label}</span>
+      <div class="row" style="gap:16px">${portrait(empSrc(c.role,sel),'face lg',c.name)}<div><span class="eyebrow">${ROLES[c.role].label}</span>
         <div class="quote" style="font-style:normal">${esc(nameFor(c,sel))}</div>${stars(c.skill)}</div></div>
       <div><div class="meta" style="margin-bottom:8px">Choisissez son apparence</div>
         <div class="looks">${[1,2,3,4].map(n=>`<button class="look" data-act="look" data-id="${n}" aria-pressed="${sel===n}" aria-label="Apparence ${n}"><img src="${empSrc(c.role,n)}" alt="" onerror="this.onerror=null;this.src=SIL"></button>`).join('')}</div></div>
       <div class="kv"><span>Salaire</span><b class="num">${eur(c.salary)} / mois</b><span>Prime d'embauche</span><b class="num">${eur(fee)}</b></div>
-      <div class="row"><button class="btn main" data-act="hire" data-id="${c.id}" ${S.money<fee?'disabled':''}>Embaucher</button><button class="btn ghost" data-act="hireClose">Annuler</button></div>
+      <div class="row"><button class="btn main" data-act="hire" data-id="${c.id}" ${S.money<fee?'disabled':''}>Embaucher</button><button class="btn ghost" data-act="hireClose" data-id="${c.role}">Retour</button></div>
     </div></div></div>`;
     return;
   }
@@ -1188,12 +1553,18 @@ function renderModal(){
       :`<div class="row" style="justify-content:space-between"><span class="meta">Offre du client <b class="num" style="color:var(--fg)">${eur(c.offer)}</b></span>
           <span class="row"><span class="meta">Patience</span><span class="patience">${Array.from({length:c.patienceMax},(_,i)=>`<i class="${i<c.patience?'on':''}"></i>`).join('')}</span></span></div>
         <div class="row"><button class="btn main" data-act="negoAccept">Accepter ${eur(c.offer)}</button></div>
-        <div class="row"><label class="field" for="counter"><input id="counter" data-draft="counter" inputmode="numeric" value="${esc(drafts.counter||'')}"><span>€</span></label>
+        <div class="row"><label class="field" for="counter"><input id="counter" data-draft="counter" inputmode="numeric" value="${esc(drafts.counter||'')}" aria-label="Contre-proposition"><span>€</span></label>
           <button class="btn" data-act="negoCounter">Contre-proposer</button></div>
-        <div class="row"><button class="btn" data-act="negoGeste" ${nego.geste?'disabled':''}>Offrir une garantie 6 mois <small>400 €</small></button>
+        <div class="row"><button class="btn" data-act="negoCafe" ${c.coffee?'disabled':''}>${c.coffee?'Café offert':`Offrir un café <small>${has('cafe')?'offert':'5 €'}</small>`}</button>
+          <button class="btn" data-act="negoGeste" ${nego.geste?'disabled':''}>Garantie 6 mois <small>400 €</small></button>
           <button class="btn ghost danger" data-act="negoDismiss">Congédier</button></div>`}
       </div></div></div>`;
     return;
+  }
+  if(fiche){
+    const car=S.cars.find(c=>c.uid===fiche);
+    if(car){ m.innerHTML=ficheHTML(car); return; }
+    fiche=null;
   }
   m.innerHTML='';
 }
@@ -1202,33 +1573,59 @@ function updateLive(){
   document.querySelectorAll('[data-ends]').forEach(el=>el.textContent=mmss(+el.dataset.ends-now()));
   document.querySelectorAll('[data-pend]').forEach(el=>{const s=+el.dataset.start,e=+el.dataset.pend;el.style.width=clamp((now()-s)/(e-s),0,1)*100+'%'});
 }
-function toast(t,kind){
+// notification, avec un bouton d'action quand c'est utile
+function toast(t,kind,action){
   const box=document.getElementById('toasts'), el=document.createElement('div');
-  el.className='toast '+(kind||''); el.textContent=t; box.appendChild(el);
-  setTimeout(()=>el.remove(),4200); while(box.children.length>3)box.firstChild.remove();
+  el.className='toast '+(kind||'');
+  const sp=document.createElement('span'); sp.textContent=t; el.appendChild(sp);
+  if(action){ const b=document.createElement('button'); b.className='btn sm tbtn'; b.textContent=action.label; b.dataset.act=action.act; if(action.id!=null) b.dataset.id=action.id; el.appendChild(b); }
+  box.appendChild(el);
+  setTimeout(()=>el.remove(),action?7000:4200); while(box.children.length>3)box.firstChild.remove();
 }
 
-document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.draft;if(k)drafts[k]=e.target.value;});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='counter')negoCounter();});
+document.addEventListener('input',e=>{
+  const k=e.target.dataset&&e.target.dataset.draft; if(!k) return;
+  drafts[k]=e.target.value;
+  if(k.startsWith('ask-')){ const uid=+k.slice(4), car=S.cars.find(c=>c.uid===uid), g=document.getElementById('gauge-'+uid);
+    if(car&&g) g.innerHTML=gaugeInner(car,parseInt(String(e.target.value).replace(/\D/g,''),10)||0); }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='counter')negoCounter();
+  if(e.key==='Enter'&&e.target.id&&e.target.id.startsWith('ask-')) listCar(+e.target.id.slice(4)), fiche&&renderModal();
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role="button"][data-act]')){ e.preventDefault(); e.target.click(); }
+  if(e.key==='Escape'){ if(todoOpen){todoOpen=false;render();} else if(fiche){fiche=null;renderModal();} }
+});
 document.addEventListener('submit',e=>{if(e.target.id==='acct-form'){e.preventDefault();acctSubmit();}});
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled)return;
   const id=b.dataset.id, n=+id;
+  if(b.classList.contains('tbtn')){ const t=b.closest('.toast'); if(t) t.remove(); }
+  const refreshFiche=()=>{ if(fiche) renderModal(); };
   switch(b.dataset.act){
-    case 'tab': S.tab=id; save(); render(); break;
+    case 'tab': S.tab=id; todoOpen=false; save(); render(); window.scrollTo({top:Math.min(window.scrollY,document.querySelector('nav').offsetTop)}); break;
+    case 'todoOpen': todoOpen=!todoOpen; render(); break;
+    case 'todoClose': todoOpen=false; render(); break;
+    case 'fiche': fiche=n; todoOpen=false; render(); renderModal(); break;
+    case 'ficheClose': fiche=null; renderModal(); break;
+    case 'ficheFromAuction': auction=null; fiche=n; renderModal(); render(); break;
+    case 'suggest': { const car=S.cars.find(c=>c.uid===n); if(car){ drafts['ask-'+n]=String(suggested(car)); renderModal(); } break; }
     case 'inspect': inspect(n); break;
     case 'bid': startAuction(n); break;
     case 'playerBid': playerBid(); break;
     case 'leaveAuction': endAuction(true); break;
-    case 'repair': startRepair(n,b.dataset.k); break;
-    case 'list': listCar(n); break;
-    case 'unlist': unlist(n); break;
-    case 'nego': openNego(n); break;
+    case 'repair': startRepair(n,b.dataset.k); refreshFiche(); break;
+    case 'list': listCar(n); refreshFiche(); break;
+    case 'quickList': quickList(n); break;
+    case 'unlist': unlist(n); refreshFiche(); break;
+    case 'deliver': deliverOrder(n); todoOpen=false; break;
+    case 'buyUpg': buyUpg(id); break;
+    case 'nego': todoOpen=false; openNego(n); render(); break;
     case 'negoAccept': negoAccept(); break;
     case 'negoCounter': negoCounter(); break;
     case 'negoGeste': negoGeste(); break;
+    case 'negoCafe': negoCafe(); break;
     case 'negoDismiss': negoDismiss(); break;
-    case 'buyDirect': buyDirect(n); break;
+    case 'buyDirect': todoOpen=false; buyDirect(n); break;
     case 'claim': claimObj(n); break;
     case 'skipObj': skipObj(n); break;
     case 'tradeAccept': tradeAccept(); break;
@@ -1236,14 +1633,15 @@ document.addEventListener('click',e=>{
     case 'adBuy': adBuy(n); break;
     case 'adInspect': adInspect(n); break;
     case 'closeModal': auction=null; nego=null; renderModal(); render(); break;
-    case 'goStock': auction=null; S.tab='stock'; renderModal(); commit(); break;
-    case 'upgrade': upgrade(); break;
+    case 'upgrade': upgrade(); todoOpen=false; break;
     case 'rename': { const v=(drafts.garageName||'').trim(); if(v){S.garage=v; delete drafts.garageName; commit(); toast('Garage renommé.');} break; }
     case 'reset1': drafts.confirmReset=true; render(); break;
     case 'reset0': delete drafts.confirmReset; render(); break;
     case 'avatar': S.avatar=n; commit(); break;
-    case 'hireOpen': hiring=n; delete drafts.look; renderModal(); break;
-    case 'hireClose': hiring=null; delete drafts.look; renderModal(); break;
+    case 'recruit': recruit=id; renderModal(); break;
+    case 'recruitClose': recruit=null; renderModal(); break;
+    case 'hireOpen': hiring=n; recruit=null; delete drafts.look; renderModal(); break;
+    case 'hireClose': hiring=null; recruit=id||null; delete drafts.look; renderModal(); break;
     case 'look': drafts.look=n; renderModal(); break;
     case 'hire': hire(n); break;
     case 'fire1': drafts.confirmFire=n; render(); break;
@@ -1258,15 +1656,16 @@ document.addEventListener('click',e=>{
     case 'logout0': delete drafts.confirmLogout; render(); break;
     case 'logout': logout(); break;
     case 'board': loadBoard(); break;
-    case 'reset2': { const o=S.ownerUid, p=S.pseudo; delete drafts.confirmReset; S=freshState(); S.ownerUid=o; S.pseudo=p; seed(); ensureObjs(); auction=null; nego=null; hiring=null; renderModal(); commit(); cloudSave(true); break; }
+    case 'reset2': { const o=S.ownerUid, p=S.pseudo; delete drafts.confirmReset; S=freshState(); S.ownerUid=o; S.pseudo=p; seed(); ensureObjs(); auction=null; nego=null; hiring=null; recruit=null; fiche=null; renderModal(); commit(); cloudSave(true); break; }
   }
 });
 
-function seed(){ for(let i=0;i<4;i++)S.lots.push(newLot()); S.nextLotAt=now()+30000; S.ads=[newAd()]; S.nextAdAt=now()+60000; S.nextMonthAt=now()+MONTH;
+function seed(){ refreshLots(); S.ads=[newAd()]; S.nextAdAt=now()+60000; S.nextMonthAt=now()+MONTH; S.nextOrderAt=now()+rnd(6,9)*60000;
   log('Ouverture du garage. 15 000 € en caisse et trois places de parking.'); }
 function start(data){
   S=(data&&data.S)||load();
   if(!S){S=freshState(); seed();}
+  else if(!S.lotsAt){ S.lotsAt=now()+LOTS_EVERY; while(S.lots.length<4) S.lots.push(newLot()); }
   ensureObjs();
   render(); renderModal();
   fbInit();
@@ -1274,4 +1673,5 @@ function start(data){
 }
 window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+
 </script>
