@@ -474,11 +474,19 @@ const MODELS = [
   {id:'vortex',  brand:'Vortex',    name:'9 S',          type:'sport', tier:3, base:118000, w:68, colors:[['gris','Gris craie'],['bleu','Bleu nuit'],['vert','Vert anglais']]},
   {id:'strada',  brand:'Ferrano',   name:'Strada GT',    type:'coupe', tier:3, base:165000, w:74, colors:[['rouge','Rouge course'],['noir','Noir verni'],['argent','Argent']]},
   // Gamme neuve Volkner : uniquement commandée par la concession (niveau 5)
+  {id:'berlinette',brand:'Arvane',  name:'Berlinette',   type:'sport', tier:3, base:64000, w:64, colors:[['bleu','Bleu Alpin'],['blanc','Blanc glacier']]},
+  {id:'s4',      brand:'Brenner',   name:'S4 Competition', type:'coupe', tier:3, base:98000, w:72, colors:[['vert','Vert émeraude'],['jaune','Jaune soleil']]},
+  {id:'estate',  brand:'Hartley',   name:'Estate',       type:'suv', tier:3, base:145000, w:72, colors:[['gris','Gris satiné'],['vert','Vert anglais']]},
+  {id:'kessler', brand:'Kessler',   name:'GT',           type:'coupe', tier:3, base:155000, w:74, colors:[['vert','Vert mat'],['argent','Argent']]},
+  {id:'vortexrs',brand:'Vortex',    name:'9 RS',         type:'sport', tier:3, base:198000, w:70, colors:[['vert','Vert lézard'],['blanc','Blanc pur']]},
+  {id:'s3evo',   brand:'Brenner',   name:'S3 Evo',       type:'collection', tier:3, base:88000, w:66, classic:[1987,1991], colors:[['blanc','Blanc alpin'],['rouge','Rouge henna']]},
   {id:'tarra',   brand:'Volkner',   name:'Tarra',        type:'suv', tier:9, base:68000, w:70, colors:[['noir','Noir brillant'],['gris','Gris ciment'],['blanc','Blanc glacier']]},
   {id:'ion',     brand:'Volkner',   name:'Ion',          type:'electrique', tier:9, base:74000, w:72, colors:[['blanc','Blanc nacré'],['bleu','Bleu pétrole'],['argent','Argent']]},
   // Supercars : niveau 6
   {id:'sovereign',brand:'Ashcombe', name:'Sovereign',    type:'supercar', tier:4, base:240000, w:76, colors:[['vert','Vert anglais'],['argent','Argent'],['bleu','Bleu nuit']]},
   {id:'furia',   brand:'Ferrano',   name:'Furia',        type:'supercar', tier:4, base:290000, w:72, colors:[['rouge','Rouge course'],['jaune','Jaune vif'],['noir','Noir mat']]},
+  {id:'sei',     brand:'Ferrano',   name:'Sei',          type:'supercar', tier:4, base:265000, w:72, colors:[['rouge','Rouge course'],['bleu','Bleu nuit']]},
+  {id:'lockwood',brand:'Lockwood',  name:'780',          type:'supercar', tier:4, base:330000, w:74, colors:[['orange','Orange papaye'],['bleu','Bleu océan']]},
   {id:'raiden',  brand:'Kaiden',    name:'Raiden',       type:'supercar', tier:4, base:460000, w:72, colors:[['blanc','Blanc nacré'],['orange','Orange vif'],['gris','Gris anthracite']]},
 ];
 const CLIENT_NAMES = ['M. Bertin','Mme Lefèvre','M. Haddad','Mme Rossi','M. Petit','Mme Diallo','M. Garnier','Mme Moreau','M. Lambert','Mme Chevalier','M. Roux','Mme Fontaine','M. Nguyen','Mme Girard'];
@@ -492,10 +500,10 @@ const PERSONAS = {
 function pickPersona(){let r=Math.random()*100;for(const[k,p]of Object.entries(PERSONAS)){if((r-=p.w)<0)return k}return 'indecis'}
 
 /* Marché : une saison par mois de jeu, et parfois un événement qui fait bouger la cote d'un type de voiture */
-const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés',sport:'sportives',cabriolet:'cabriolets',electrique:'électriques',supercar:'supercars'};
+const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés',sport:'sportives',cabriolet:'cabriolets',electrique:'électriques',supercar:'supercars',collection:'voitures de collection'};
 const SEASONS=[
   {name:'Printemps', fx:{coupe:.12, cabriolet:.15, citadine:.04, supercar:.05}},
-  {name:'Été',       fx:{coupe:.08, cabriolet:.10, citadine:.06, suv:-.05}},
+  {name:'Été',       fx:{coupe:.08, cabriolet:.10, citadine:.06, suv:-.05, collection:.08}},
   {name:'Automne',   fx:{berline:.06, compacte:.04}},
   {name:'Hiver',     fx:{suv:.12, coupe:-.08, cabriolet:-.15, sport:-.05, supercar:-.06}},
 ];
@@ -503,7 +511,7 @@ const EVENTS=[
   {name:'Pénurie de puces', text:'Les voitures neuves manquent, l\'occasion grimpe partout.', fx:{all:.10}},
   {name:'Nouvelle taxe sur les gros véhicules', text:'Les SUV deviennent moins désirables.', fx:{suv:-.15}},
   {name:'Flambée des prix du carburant', text:'Tout le monde cherche une petite voiture.', fx:{citadine:.14, compacte:.06, suv:-.08}},
-  {name:'Salon de l\'automobile', text:'Coupés et sportives ont la cote cette saison.', fx:{coupe:.15, sport:.10}},
+  {name:'Salon de l\'automobile', text:'Coupés et sportives ont la cote cette saison.', fx:{coupe:.15, sport:.10, collection:.12}},
   {name:'Saison de courses', text:'Les passionnés s\'arrachent les sportives.', fx:{sport:.18, supercar:.10}},
   {name:'Bonus écologique', text:'L\'État aide à l\'achat des voitures électriques.', fx:{electrique:.15}},
   {name:'Prime à la conversion', text:'Les familles changent de berline.', fx:{berline:.10}},
@@ -698,7 +706,7 @@ const lvl=()=>LEVELS[S.level];
 const avgCond=c=>c.meca*.35+c.carro*.3+c.inter*.2+c.pneus*.15;
 function valueOf(car,cond){
   const m=model(car.modelId), age=Math.max(0,YEAR-car.year);
-  const a=Math.pow(m.tier>=3?.95:.885,age), k=Math.max(.35,1-car.km/320000);
+  const a=m.classic?1:Math.pow(m.tier>=3?.95:.885,age), k=m.classic?Math.max(.55,1-car.km/600000):Math.max(.35,1-car.km/320000);
   const cf=.4+.6*(cond ?? avgCond(car.cond));
   return r100(m.base*a*k*cf*(S?marketFx(m.type):1)*(car.limited?1.7:1));
 }
@@ -720,8 +728,8 @@ const LOTS_EVERY=5*60*1000;
 
 function newCar(tier,forceModel,forceColor){
   const m=forceModel?model(forceModel):pick(MODELS.filter(x=>x.tier===tier));
-  const year=ri(2011,2024), age=YEAR-year;
-  const km=Math.round((age*rnd(7000,19000)+rnd(0,6000))/1000)*1000;
+  const year=m.classic?ri(m.classic[0],m.classic[1]):ri(2011,2024), age=YEAR-year;
+  const km=m.classic?Math.round(rnd(80000,210000)/1000)*1000:Math.round((age*rnd(7000,19000)+rnd(0,6000))/1000)*1000;
   const q=rnd(.25,.92), c=()=>+clamp(q+rnd(-.25,.2),.08,1).toFixed(2);
   const col=(forceColor&&m.colors.find(x=>x[0]===forceColor))||pick(m.colors);
   return {uid:S.uid++, modelId:m.id, year, km, color:{s:col[0],n:col[1]}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
@@ -803,7 +811,7 @@ function limitedTick(t){
   if(S.limited){ if(t<S.limited.endsAt) return false; toast(`L'édition limitée ${S.limited.edition} est partie chez un autre concessionnaire.`,'bad'); S.limited=null; S.nextLimitedAt=t+rnd(8,11)*60000; return true; }
   if(!S.nextLimitedAt){ S.nextLimitedAt=t+rnd(4,6)*60000; return false; }
   if(t<S.nextLimitedAt) return false;
-  const m=pick(MODELS.filter(x=>x.tier>=3&&x.tier<=4)), col=pick(m.colors);
+  const m=pick(MODELS.filter(x=>x.tier>=3&&x.tier<=4&&!x.classic)), col=pick(m.colors);
   S.limited={id:S.uid++, modelId:m.id, color:col[0], colorN:col[1], edition:pick(EDITIONS), price:r100(listPrice(m.id)*1.1), endsAt:t+4*60000};
   toast(`Édition limitée disponible : ${m.brand} ${m.name} ${S.limited.edition}, un seul exemplaire.`,'',{label:'Voir',act:'tab',id:'achats'});
   return true;
@@ -1072,7 +1080,7 @@ const carNameM=id=>{const m=model(id);return `${m.brand} ${m.name}`};
 function newOrder(){
   const tiers=lvl().tiers, m=pick(MODELS.filter(x=>tiers.includes(x.tier)));
   const col=Math.random()<.45?null:pick(m.colors);
-  return {id:S.uid++, modelId:m.id, color:col?col[0]:null, colorN:col?col[1]:null, maxKm:pick([60000,80000,100000,120000]),
+  return {id:S.uid++, modelId:m.id, color:col?col[0]:null, colorN:col?col[1]:null, maxKm:m.classic?pick([150000,180000,200000]):pick([60000,80000,100000,120000]),
     mult:+(S.level>=6?rnd(1.35,1.6):rnd(1.3,1.45)).toFixed(2), name:pick(COLLECTORS), endsAt:now()+12*60000};
 }
 const matchesOrder=car=>{const o=S.order;return !!o&&car.modelId===o.modelId&&(!o.color||car.color.s===o.color)&&car.km<=o.maxKm};
