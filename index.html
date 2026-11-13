@@ -307,6 +307,16 @@ h2 em{color:var(--amber)}
 .gauge{display:flex;flex-direction:column;gap:8px}
 .gtrack{position:relative;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--good) 0 34%,var(--warn) 34% 55%,#ec9a5c 55% 76%,var(--bad) 76%)}
 .gtrack i{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--fg);border:3px solid #140f0b;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.5);transition:left .15s}
+.gtrack.slide{margin:8px 0}
+.gtrack input[type=range]{position:absolute;left:-9px;right:-9px;top:50%;width:calc(100% + 18px);height:32px;margin:0;transform:translateY(-50%);background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:none}
+.gtrack input[type=range]:focus{outline:none}
+.gtrack input[type=range]::-webkit-slider-runnable-track{height:32px;background:transparent}
+.gtrack input[type=range]::-moz-range-track{height:32px;background:transparent}
+.gtrack input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:5px;border-radius:50%;background:var(--fg);border:3px solid #140f0b;box-shadow:0 2px 8px rgba(0,0,0,.55);cursor:grab}
+.gtrack input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--fg);border:3px solid #140f0b;box-shadow:0 2px 8px rgba(0,0,0,.55);cursor:grab}
+.gtrack input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.12)}
+.gtrack input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--amber);outline-offset:2px}
+.gtrack input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--amber);outline-offset:2px}
 .glabel{display:flex;flex-direction:column;gap:2px;font-size:13.5px}
 .glabel span{color:var(--muted)}
 .stage.is-link{cursor:pointer}
@@ -879,11 +889,23 @@ function chance(car,price){
   if(r<=1.27) return {cls:'hard',label:'Difficile',hint:'Presque tous vont négocier, et certains partiront.',pos};
   return {cls:'toohigh',label:'Trop cher',hint:price>valueOf(car)*1.3?'Peu de chances de vendre, et votre réputation baissera si quelqu’un paie ce prix.':'Peu de chances de vendre à ce prix.',pos};
 }
-function gaugeInner(car,price){
+const R0=.85,R1=1.40;
+const posToPrice=(car,pos)=>Math.max(100,Math.round(refBudget(car)*(R0+pos*(R1-R0))/100)*100);
+function gaugeInfo(car,price){
   const g=chance(car,price), margin=price-car.paid-car.spent;
-  return `<div class="gauge ${g.cls}"><div class="gtrack"><i style="left:${(g.pos*100).toFixed(1)}%"></i></div>
-    <div class="glabel"><b>${g.label}</b><span>${g.hint}</span></div>
-    <div class="meta">Marge prévue : <b class="num" style="color:${margin>=0?'var(--good)':'var(--bad)'}">${margin>=0?'+':''}${eur(margin)}</b></div></div>`;
+  return `<div class="glabel"><b>${g.label}</b><span>${g.hint}</span></div>
+    <div class="meta">Marge prévue : <b class="num" style="color:${margin>=0?'var(--good)':'var(--bad)'}">${margin>=0?'+':''}${eur(margin)}</b></div>`;
+}
+function gaugeInner(car,price){
+  const g=chance(car,price);
+  return `<div class="gauge ${g.cls}"><div class="gtrack slide"><input type="range" min="0" max="1000" step="1" value="${Math.round(g.pos*1000)}" data-slide="${car.uid}" aria-label="Glisser pour fixer le prix de vente" aria-valuetext="${eur(price)}"></div>
+    <div class="ginfo">${gaugeInfo(car,price)}</div></div>`;
+}
+function gaugeUpdate(car,price,fromSlider){
+  const box=document.getElementById('gauge-'+car.uid); if(!box) return;
+  const g=chance(car,price), gg=box.querySelector('.gauge'), info=box.querySelector('.ginfo'), rg=box.querySelector('input[type=range]');
+  if(gg) gg.className='gauge '+g.cls; if(info) info.innerHTML=gaugeInfo(car,price);
+  if(rg){ rg.setAttribute('aria-valuetext',eur(price)); if(!fromSlider) rg.value=Math.round(g.pos*1000); }
 }
 const priceOf=uid=>{const car=S.cars.find(c=>c.uid===uid); const d=drafts['ask-'+uid]; return d!=null?parseInt(String(d).replace(/\D/g,''),10)||0:(car.status==='vente'?car.ask:suggested(car));};
 function listCar(uid){
@@ -1755,8 +1777,16 @@ function toast(t,kind,action){
 document.addEventListener('input',e=>{
   const k=e.target.dataset&&e.target.dataset.draft; if(!k) return;
   drafts[k]=e.target.value;
-  if(k.startsWith('ask-')){ const uid=+k.slice(4), car=S.cars.find(c=>c.uid===uid), g=document.getElementById('gauge-'+uid);
-    if(car&&g) g.innerHTML=gaugeInner(car,parseInt(String(e.target.value).replace(/\D/g,''),10)||0); }
+  if(k.startsWith('ask-')){ const uid=+k.slice(4), car=S.cars.find(c=>c.uid===uid);
+    if(car) gaugeUpdate(car,parseInt(String(e.target.value).replace(/\D/g,''),10)||0,false); }
+});
+document.addEventListener('input',e=>{
+  const uid=e.target.dataset&&e.target.dataset.slide; if(uid==null) return;
+  const car=S.cars.find(c=>c.uid===+uid); if(!car) return;
+  const p=posToPrice(car,(+e.target.value)/1000);
+  drafts['ask-'+uid]=String(p);
+  const inp=document.getElementById('ask-'+uid); if(inp) inp.value=String(p);
+  gaugeUpdate(car,p,true);
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='counter')negoCounter();
