@@ -302,6 +302,7 @@ h2 em{color:var(--amber)}
 @media (max-width:370px){.tabs button{padding:8px 7px;font-size:12.5px}}
 .eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .status{font-size:13.5px;color:var(--muted)}
+.trophy{color:var(--amber)}
 .chance{font-weight:700}
 .chance.fast,.gauge.fast b{color:var(--good)} .chance.normal,.gauge.normal b{color:var(--warn)} .chance.hard,.gauge.hard b{color:#ec9a5c} .chance.toohigh,.gauge.toohigh b{color:var(--bad)}
 .gauge{display:flex;flex-direction:column;gap:8px}
@@ -436,6 +437,17 @@ const LEVELS = [null,
   {name:'Concession agréée', parking:14, ateliers:4, tiers:[1,2,3], staff:8, unlock:'le contrat Volkner : commandes de voitures neuves, quota mensuel et primes'},
   {name:'Concession de luxe', parking:18, ateliers:5, tiers:[1,2,3,4], staff:10, unlock:'les supercars, les éditions limitées et un salon de grand luxe'},
 ];
+// paliers après le niveau 6 : 6.1 à 6.5
+const STARS = {
+  1:{name:'Agrandissement', cost:300000, money:800000, rep:74, sold:80, unlock:'4 places de parking et un pont d’atelier en plus'},
+  2:{name:'Clientèle VIP', cost:450000, money:1100000, rep:78, sold:100, unlock:'des clients VIP aux gros budgets, fans de sportives et de supercars'},
+  3:{name:'Enchères prestige', cost:650000, money:1500000, rep:82, sold:125, unlock:'une supercar ou une voiture de collection garantie à chaque vente aux enchères'},
+  4:{name:'Reprises prestige', cost:850000, money:1900000, rep:86, sold:150, unlock:'plus de reprises, et surtout des sportives et des supercars'},
+  5:{name:'Concessionnaire de l’année', cost:1200000, money:2500000, rep:90, sold:180, unlock:'le trophée dans le classement et +5 % sur le budget de tous les clients'},
+};
+const star=()=>S.level>=6?(S.star||0):0;
+const lvlNum=()=>star()?`6.${star()}`:String(S.level);
+const lvlName=()=>star()?`${lvl().name} · ${STARS[star()].name}`:lvl().name;
 const UPGRADES = {2:{cost:20000, money:30000, rep:12, sold:5}, 3:{cost:50000, money:70000, rep:25, sold:12}, 4:{cost:100000, money:140000, rep:40, sold:25}, 5:{cost:180000, money:250000, rep:55, sold:40}, 6:{cost:400000, money:600000, rep:70, sold:60}};
 
 /* Employés : un « mois » de jeu dure 5 minutes, les salaires tombent à chaque fin de mois.
@@ -608,9 +620,9 @@ function cloudSave(force){
   if(!force && wait>0){ if(!fb.timer) fb.timer=setTimeout(()=>{fb.timer=null;cloudSave(true)},wait); return; }
   fb.lastCloud=Date.now();
   const uid=fb.user.uid, ts=firebase.firestore.FieldValue.serverTimestamp();
-  fb.db.collection('parties').doc(uid).set({save:JSON.stringify(S), level:S.level, money:Math.round(S.money), updatedAt:ts})
+  fb.db.collection('parties').doc(uid).set({save:JSON.stringify(S), level:+lvlNum(), money:Math.round(S.money), updatedAt:ts})
     .then(()=>{fb.syncedAt=Date.now();}).catch(e=>console.warn(e));
-  fb.db.collection('classement').doc(uid).set({pseudo:S.pseudo||'Joueur', garage:S.garage, avatar:S.avatar, level:S.level, fortune:fortuneOf(), sold:S.stats.sold, updatedAt:ts})
+  fb.db.collection('classement').doc(uid).set({pseudo:S.pseudo||'Joueur', garage:S.garage, avatar:S.avatar, level:+lvlNum(), fortune:fortuneOf(), sold:S.stats.sold, updatedAt:ts})
     .catch(e=>console.warn(e));
 }
 function adoptState(d){
@@ -696,7 +708,7 @@ function acctPanel(){
   <section class="panel glass"><h3>Classement</h3>
     ${b==null?`<p class="meta">Les 20 garages les plus riches, tous joueurs confondus.</p><button class="btn" data-act="board">Afficher le classement</button>`
     :b==='loading'?`<p class="meta">Chargement…</p>`:b==='error'?`<p class="meta">Impossible de charger le classement.</p><button class="btn" data-act="board">Réessayer</button>`
-    :`<ol class="board">${b.map((r,i)=>`<li class="${r.uid===fb.user.uid?'me-row':''}"><span class="rk num">${i+1}</span>${portrait(avatarSrc(r.avatar||1),'face sm','')}<span class="who"><b>${esc(r.pseudo||'Joueur')}</b><small>${esc(r.garage||'')} · niv. ${r.level||1}</small></span><b class="num">${eur(r.fortune||0)}</b></li>`).join('')}</ol>
+    :`<ol class="board">${b.map((r,i)=>`<li class="${r.uid===fb.user.uid?'me-row':''}"><span class="rk num">${i+1}</span>${portrait(avatarSrc(r.avatar||1),'face sm','')}<span class="who"><b>${esc(r.pseudo||'Joueur')}</b><small>${esc(r.garage||'')} · niv. ${r.level||1}${r.level>=6.5?' <span class="trophy" title="Concessionnaire de l’année">★</span>':''}</small></span><b class="num">${eur(r.fortune||0)}</b></li>`).join('')}</ol>
       <button class="btn ghost" data-act="board">Actualiser</button>`}
   </section>`;
 }
@@ -722,8 +734,8 @@ const UPG = [
   {id:'lounge',   name:'Coin lounge',               price:25000, lvl:3, desc:'Fauteuils en cuir et bar : les clients acceptent de payer 5 % de plus.'},
 ];
 const has=id=>!!(S.upg&&S.upg[id]);
-const capPark=()=>lvl().parking+(has('parking')?2:0);
-const capBays=()=>lvl().ateliers+(has('pont')?1:0);
+const capPark=()=>lvl().parking+(has('parking')?2:0)+(star()>=1?4:0);
+const capBays=()=>lvl().ateliers+(has('pont')?1:0)+(star()>=1?1:0);
 const LOTS_EVERY=5*60*1000;
 
 function newCar(tier,forceModel,forceColor){
@@ -735,15 +747,20 @@ function newCar(tier,forceModel,forceColor){
   return {uid:S.uid++, modelId:m.id, year, km, color:{s:col[0],n:col[1]}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
     inspected:false, status:'lot', paid:0, spent:0, hist:[]};
 }
-function newLot(){
+function newLot(forceModel){
   const o=S.order; let car;
   // quand une commande est en cours, la voiture recherchée passe parfois aux enchères
   if(o && Math.random()<.3){ car=newCar(0,o.modelId,o.color); if(car.km>o.maxKm) car.km=Math.round(o.maxKm*rnd(.4,.95)/1000)*1000; }
   else car=newCar(pick(lvl().tiers));
+  if(forceModel){ S.uid--; car=newCar(0,forceModel); }
   const v=valueOf(car);
   return {id:car.uid, car, start:Math.max(500,r100(v*rnd(.35,.5))), rivalMax:v*rnd(.62,.98)};
 }
-function refreshLots(){ S.lots=[]; for(let i=0;i<4;i++) S.lots.push(newLot()); S.lotsAt=now()+LOTS_EVERY; }
+function refreshLots(){ S.lots=[]; for(let i=0;i<4;i++) S.lots.push(newLot());
+  if(star()>=3 && !S.lots.some(l=>{const m=model((l.car||l).modelId);return m&&(m.tier===4||m.classic);})){
+    const ids=MODELS.filter(m=>m.tier===4||m.classic).map(m=>m.id), forced=pick(ids);
+    S.lots[3]=newLot(forced); }
+  S.lotsAt=now()+LOTS_EVERY; }
 function log(t){S.log.unshift({t,at:now()}); S.log=S.log.slice(0,60);}
 const parkingUsed=()=>S.cars.length;
 const ateliersUsed=()=>S.cars.filter(c=>c.status==='atelier').length;
@@ -938,12 +955,14 @@ function spawnClient(){
   // les amateurs de sportives sont exigeants : une voiture mal préparée les refroidit
   const sport=model(car.modelId).tier>=3&&model(car.modelId).tier<=4, ac=avgCond(car.cond), picky=sport?(ac>=.85?1.06:ac>=.7?.94:.82):1;
   if(sport && ac<.85 && key==='decide'){ key='negociateur'; P=PERSONAS.negociateur; }
-  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky*(has('lounge')?1.05:1));
+  const vip=star()>=2 && sport && Math.random()<.35;
+  if(vip){ key='decide'; P=PERSONAS.decide; }
+  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky*(has('lounge')?1.05:1)*(vip?1.2:1)*(star()>=5?1.05:1));
   // un acheteur décidé paie le prix affiché s'il rentre dans son budget, sinon il négocie
   if(key==='decide' && car.ask>max){ key='indecis'; P=PERSONAS.indecis; }
   const offer=key==='decide'?car.ask:r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
-  const trade=Math.random()<.3?newTrade():null, pat=P.patience+(has('cafe')?1:0);
-  const c={id:S.uid++, name:pick(CLIENT_NAMES), persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
+  const trade=Math.random()<(star()>=4?.45:.3)?newTrade():null, pat=P.patience+(has('cafe')?1:0);
+  const c={id:S.uid++, name:(vip?'VIP · ':'')+pick(CLIENT_NAMES), vip, persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
     patience:pat, patienceMax:pat, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil'), handledBy:null};
   S.clients.push(c);
   if(key==='decide') toast(`${c.name} veut la ${carName(car)} au prix affiché.`,'',{label:'Vendre',act:'buyDirect',id:c.id});
@@ -951,7 +970,7 @@ function spawnClient(){
 }
 // voiture qu'un client propose de laisser en reprise
 function newTrade(){
-  const car=newCar(pick(lvl().tiers)); car.inspected=true; car.status='stock';
+  const car=newCar(star()>=4&&Math.random()<.6?pick([3,4]):pick(lvl().tiers)); car.inspected=true; car.status='stock';
   return {car, price:r100(valueOf(car)*rnd(.82,1.18))};
 }
 const carOf=c=>S.cars.find(x=>x.uid===c.carUid);
@@ -1117,8 +1136,10 @@ function buyUpg(id){
 
 // --- Progression
 function upgradeReqs(){
-  const u=UPGRADES[S.level+1]; if(!u)return null;
-  return {u, list:[
+  let u, label, name, unlock, isStar=false;
+  if(S.level<6){ u=UPGRADES[S.level+1]; if(!u)return null; const L=LEVELS[S.level+1]; label=`Niveau ${S.level+1}`; name=L.name; unlock=`${L.parking} places, ${L.ateliers} ponts, et ${L.unlock}`; }
+  else { u=STARS[star()+1]; if(!u)return null; isStar=true; label=`Palier 6.${star()+1}`; name=u.name; unlock=u.unlock; }
+  return {u, label, name, unlock, isStar, list:[
     {label:'Trésorerie', need:eur(u.money), ok:S.money>=u.money, have:eur(S.money)},
     {label:'Réputation', need:u.rep, ok:S.rep>=u.rep, have:S.rep},
     {label:'Voitures vendues', need:u.sold, ok:S.stats.sold>=u.sold, have:S.stats.sold},
@@ -1126,8 +1147,9 @@ function upgradeReqs(){
 }
 function upgrade(){
   const r=upgradeReqs(); if(!r||!r.list.every(x=>x.ok))return;
-  S.money-=r.u.cost; S.level++; log(`Nouveau niveau : ${lvl().name}.`);
-  toast(`Niveau ${S.level} : ${lvl().name}. Débloque ${lvl().unlock}.`,'good');
+  S.money-=r.u.cost;
+  if(r.isStar){ S.star=star()+1; log(`Nouveau palier : ${lvlNum()} ${r.name}.`); toast(`Palier ${lvlNum()} : ${r.name}. Débloque ${r.unlock}.`,'good'); }
+  else { S.level++; log(`Nouveau niveau : ${lvl().name}.`); toast(`Niveau ${S.level} : ${lvl().name}. Débloque ${lvl().unlock}.`,'good'); }
   if(staffSlots())refreshCandidates();
   commit();
 }
@@ -1394,7 +1416,7 @@ function render(){
   document.body.classList.toggle('lv6',S.level>=6);
   document.getElementById('top').innerHTML=`
     <div class="brand"><button class="mebtn" data-act="tab" data-id="profil" aria-label="Ouvrir votre profil">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}</button><div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
-      <div class="lvl">Niveau ${S.level} · ${lvl().name}</div></div></div>
+      <div class="lvl">Niveau ${lvlNum()} · ${lvlName()}${star()>=5?' <span class="trophy" aria-hidden="true">★</span>':''}</div></div></div>
     <div class="stats">
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
@@ -1417,7 +1439,7 @@ function render(){
 function todoItems(){
   const t=now(), items=[];
   S.objs.filter(o=>o.done).forEach(o=>items.push({u:1,txt:'Objectif atteint',sub:o.label,btn:['Récupérer','claim',o.id]}));
-  const r=upgradeReqs(); if(r&&r.list.every(x=>x.ok)) items.push({u:1,txt:`Niveau ${S.level+1} disponible`,sub:`${LEVELS[S.level+1].name} · ${eur(r.u.cost)}`,btn:['Agrandir','upgrade','']});
+  const r=upgradeReqs(); if(r&&r.list.every(x=>x.ok)) items.push({u:1,txt:`${r.label} disponible`,sub:`${r.name} · ${eur(r.u.cost)}`,btn:[r.isStar?'Passer le palier':'Agrandir','upgrade','']});
   if(S.order){
     const m=S.cars.find(c=>matchesOrder(c)&&c.status!=='atelier');
     items.push(m?{u:1,txt:`Vous avez la voiture de ${S.order.name}`,sub:`${carName(m)} · ${eur(r100(valueOf(m)*S.order.mult))}`,ends:S.order.endsAt,btn:['Livrer','deliver',m.uid]}
@@ -1610,11 +1632,11 @@ function viewProfil(){
         <span>Marge cumulée</span><b class="num" style="color:${S.stats.profit>=0?'var(--good)':'var(--bad)'}">${eur(S.stats.profit)}</b>
         <span>Objectifs accomplis</span><b class="num">${S.objDone}</b>
       </div></section>
-    <section class="panel glass"><h3>${r?`Prochain niveau : ${LEVELS[S.level+1].name}`:'Niveau maximum atteint'}</h3>
+    <section class="panel glass"><h3>${r?`${r.isStar?'Prochain palier':'Prochain niveau'} : ${r.label.replace(/^(Niveau|Palier) /,'')} · ${r.name}`:'Sommet atteint'}</h3>
       ${r?`${r.list.map(x=>`<div class="req"><span>${x.label}</span><span class="${x.ok?'ok':'ko'} num">${x.have} / ${x.need}</span></div>`).join('')}
-      <p class="meta">Coût de l'agrandissement : ${eur(r.u.cost)}. Débloque ${LEVELS[S.level+1].parking} places, ${LEVELS[S.level+1].ateliers} ponts, et ${LEVELS[S.level+1].unlock}.</p>
-      <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>Agrandir le garage</button>`
-      :`<p class="meta">Vous dirigez la plus belle concession de la ville. Visez maintenant le haut du classement.</p>`}
+      <p class="meta">Coût : ${eur(r.u.cost)}. Débloque ${r.unlock}.</p>
+      <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>${r.isStar?'Passer le palier':'Agrandir le garage'}</button>`
+      :`<p class="meta">Concessionnaire de l’année : vous dirigez la plus belle concession de la ville. Visez maintenant le haut du classement.</p>`}
     </section>
     <section class="panel glass"><h3>Journal</h3>
       ${S.log.length?`<ul class="log">${S.log.map(l=>`<li><time>${new Date(l.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="meta">Rien pour l’instant.</p>'}
@@ -1689,9 +1711,9 @@ function renderModal(){
       <div class="quote" style="font-style:normal">Deux parties trouvées</div>
       <p class="meta" style="margin:0">Ce compte a déjà une partie en ligne, et vous avez aussi une partie sur cet appareil. Laquelle garder ? L'autre sera remplacée.</p>
       <div class="cols">
-        <div class="panel glass"><h3>En ligne</h3><div class="kv"><span>Garage</span><b>${esc(c.garage)}</b><span>Niveau</span><b>${c.level}</b><span>Trésorerie</span><b class="num">${eur(c.money)}</b><span>Ventes</span><b class="num">${c.stats.sold}</b></div>
+        <div class="panel glass"><h3>En ligne</h3><div class="kv"><span>Garage</span><b>${esc(c.garage)}</b><span>Niveau</span><b>${c.level}${c.level>=6&&c.star?'.'+c.star:''}</b><span>Trésorerie</span><b class="num">${eur(c.money)}</b><span>Ventes</span><b class="num">${c.stats.sold}</b></div>
           <button class="btn main" style="margin-top:12px" data-act="keepCloud">Garder celle-ci</button></div>
-        <div class="panel glass"><h3>Cet appareil</h3><div class="kv"><span>Garage</span><b>${esc(S.garage)}</b><span>Niveau</span><b>${S.level}</b><span>Trésorerie</span><b class="num">${eur(S.money)}</b><span>Ventes</span><b class="num">${S.stats.sold}</b></div>
+        <div class="panel glass"><h3>Cet appareil</h3><div class="kv"><span>Garage</span><b>${esc(S.garage)}</b><span>Niveau</span><b>${lvlNum()}</b><span>Trésorerie</span><b class="num">${eur(S.money)}</b><span>Ventes</span><b class="num">${S.stats.sold}</b></div>
           <button class="btn main" style="margin-top:12px" data-act="keepLocal">Garder celle-ci</button></div>
       </div></div></div></div>`;
     return;
