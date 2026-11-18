@@ -303,6 +303,46 @@ h2 em{color:var(--amber)}
 .eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .status{font-size:13.5px;color:var(--muted)}
 .trophy{color:var(--amber)}
+.hero-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.minimap{display:flex;align-items:center;gap:12px;padding:8px 16px 8px 8px;border-radius:16px;color:var(--fg);text-align:left;cursor:pointer;transition:border-color .2s}
+.minimap:hover{border-color:var(--edge-strong)}
+.minimap .map{width:78px;height:74px;flex:none}
+.mm-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mm-t small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.mm-t b{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.1}
+.mm-t .meta{font-size:12px}
+.mm-new{margin-top:3px;align-self:flex-start;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--amber);color:#140f0b}
+.map .land{fill:rgba(255,236,210,.06);stroke:rgba(242,166,90,.55);stroke-width:.6;stroke-linejoin:round}
+.map.mini .land{stroke-width:1.2}
+.map .route{stroke:rgba(255,236,210,.22);stroke-width:.6;stroke-dasharray:1.6 1.4}
+.map .route.on{stroke:var(--amber);stroke-dasharray:none;opacity:.8}
+.map .pin .dot{fill:#140f0b;stroke:rgba(255,236,210,.35);stroke-width:.9}
+.map .pin.open .dot{fill:#140f0b;stroke:var(--amber);stroke-width:1.2}
+.map .pin.here .dot{fill:var(--amber);stroke:#fff3e0;stroke-width:.8}
+.map .pin.here .ring{fill:none;stroke:var(--amber);stroke-width:.8;opacity:.6;animation:pinpulse 2.4s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.map .pin.free .dot{fill:#140f0b;stroke:#fff3e0;stroke-width:1;stroke-dasharray:1.2 .9}
+.map .pin.locked .dot{fill:#140f0b;stroke:rgba(255,236,210,.18)}
+.map .pin.sel .dot{stroke-width:1.8}
+.map .lbl{font:600 4.2px Manrope,system-ui,sans-serif;fill:var(--fg);paint-order:stroke;stroke:#0d0a08;stroke-width:1.2px}
+.map .pin.locked .lbl{fill:var(--muted)}
+.map .star{font-size:4.4px;fill:var(--amber)}
+.map a{cursor:pointer}.map a:focus-visible .dot{stroke:#fff;stroke-width:2}
+@keyframes pinpulse{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.map .pin.here .ring{animation:none}}
+.modal.mapmodal{width:min(1080px,100%);padding:52px 28px 28px;position:relative}
+.map-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
+.map-l h2{margin:2px 0 6px}.map-l .map{width:100%;max-width:520px;height:auto;margin-top:10px}
+.map-r{display:grid;gap:10px;max-height:min(72vh,640px);overflow:auto;padding-right:4px}
+.citycard{padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:6px}
+.citycard.sel{border-color:rgba(242,166,90,.6)}
+.citycard.c-locked{opacity:.6}
+.citycard .ct{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.citycard .ct b{font-size:18px}
+.citycard .spec{margin-left:auto;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+.citycard p{margin:0;font-size:14px;line-height:1.45}
+.citycard .herelbl{font-size:12.5px;font-weight:600;color:var(--amber)}
+.citycard .confirm{display:grid;gap:8px}
+@media (max-width:860px){.map-cols{grid-template-columns:1fr}.map-r{max-height:none;overflow:visible}.map-l .map{max-width:380px;display:block;margin-inline:auto}.modal.mapmodal{padding:44px 16px 16px}}
+@media (max-width:540px){.hero-r{align-items:stretch;width:100%}.minimap{padding:6px 12px 6px 6px}.minimap .map{width:52px;height:50px}.mm-t b{font-size:19px}}
 .franchises{margin-top:22px;border-top:1px solid var(--edge-strong);padding-top:18px}
 .franchises h3{margin:0 0 4px;font-family:'Instrument Serif',serif;font-weight:400;font-size:24px}
 .frlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
@@ -556,7 +596,7 @@ const EVENTS=[
 ];
 function marketFx(type){
   const se=SEASONS[S.monthIdx%4].fx, ev=S.event?EVENTS[S.event-1].fx:{};
-  return 1+(se[type]||0)+(ev[type]||0)+(ev.all||0);
+  return 1+(se[type]||0)+(ev[type]||0)+(ev.all||0)+(S.city==='nice'&&['sport','coupe','cabriolet','supercar'].includes(type)?.12:0);
 }
 function fxList(){
   const out=[], add=(fx)=>{for(const[k,v]of Object.entries(fx))out.push(`${k==='all'?'toutes':TYPE_LABEL[k]} ${v>0?'+':'−'}${Math.round(Math.abs(v)*100)} %`)};
@@ -588,6 +628,48 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 /* =====================================================================
    3. MOTEUR DE JEU
    ===================================================================== */
+/* =====================================================================
+   VILLES — une concession par ville ; une seule tourne à la fois, les autres sont figées
+   ===================================================================== */
+const CITIES={
+  paris:  {name:'Paris',    spec:'Équilibrée',        desc:'Votre première concession. Ni bonus, ni malus.', x:50, y:30},
+  lille:  {name:'Lille',    spec:'Zone industrielle', desc:'Enchères 12 % moins chères, mais clients 8 % plus radins.', x:55, y:9},
+  lehavre:{name:'Le Havre', spec:'Port',              desc:'Un lot de plus à chaque vente aux enchères, mais presque deux fois plus d’arnaques chez les particuliers.', x:35, y:22},
+  lyon:   {name:'Lyon',     spec:'Centre-ville',      desc:'2 places de parking en moins, mais clients 12 % plus aisés.', x:69, y:57},
+  nice:   {name:'Nice',     spec:'Riviera',           desc:'Sportives, coupés, cabriolets et supercars valent 12 % de plus.', x:87, y:77},
+};
+const ROUTES=[['paris','lille'],['paris','lehavre'],['paris','lyon'],['lyon','nice']];
+const SHARED=['avatar','pseudo','ownerUid','badges','flags','garage','done','sites','savedAt'];
+const city=()=>CITIES[S.city]||CITIES.paris;
+const openCities=()=>[S.city,...Object.keys(S.sites||{})];
+const canOpenCity=()=>Object.keys(S.done||{}).length>=openCities().length && openCities().length<Object.keys(CITIES).length;
+const startRep=()=>Math.min(30,10*Object.keys(S.done||{}).length);
+// décale tous les horodatages d'une concession figée du temps passé en pause
+function shiftTimes(o,dt,ref){
+  if(Array.isArray(o)){ o.forEach((v,i)=>{ if(typeof v==='number'&&v>1.6e12&&v<ref+5e10) o[i]=v+dt; else if(v&&typeof v==='object') shiftTimes(v,dt,ref); }); return; }
+  for(const k in o){ const v=o[k]; if(typeof v==='number'&&v>1.6e12&&v<ref+5e10) o[k]=v+dt; else if(v&&typeof v==='object') shiftTimes(v,dt,ref); }
+}
+function goCity(id){
+  if(!CITIES[id]||id===S.city)return;
+  const isNew=!S.sites[id];
+  if(isNew&&!canOpenCity())return;
+  const shared={}; SHARED.forEach(k=>shared[k]=S[k]);
+  const snap=JSON.parse(JSON.stringify(S)); SHARED.forEach(k=>delete snap[k]); snap.pausedAt=now();
+  let next;
+  if(isNew){
+    next=freshState(); next.city=id; next.rep=startRep(); SHARED.forEach(k=>delete next[k]);
+  } else {
+    next=S.sites[id]; shiftTimes(next,now()-(next.pausedAt||now()),next.pausedAt||now()); delete next.pausedAt;
+  }
+  const sites={...shared.sites}; delete sites[id]; sites[S.city]=snap;
+  S=Object.assign(next,shared,{sites});
+  if(isNew){ S.tab='achats'; seed(); log(`Ouverture à ${CITIES[id].name} avec ${S.rep} de réputation.`); }
+  S=migrate(S);
+  auction=null; nego=null; hiring=null; recruit=null; fiche=null; mapOpen=false; delete drafts.confirmCity;
+  ensureObjs(); renderModal(); commit(); cloudSave(true);
+  toast(isNew?`Nouvelle concession à ${city().name} (${city().spec}). Tout recommence, avec ${S.rep} de réputation.`:`Retour à ${city().name}. Tout reprend là où vous l'aviez laissé.`,'good');
+}
+
 const SAVE_KEY='concession_tycoon_v2';
 let S, auction=null, nego=null;
 const drafts={};
@@ -601,13 +683,15 @@ function freshState(){
     ads:[], nextAdAt:0, monthIdx:0, nextMonthAt:0, event:0, objs:[], objDone:0,
     upg:{}, order:null, nextOrderAt:0, lotsAt:0, lastClientAt:0,
     newOrders:[], newSold:0, limited:null, nextLimitedAt:0,
-    franchise:'volkner', reviews:[], months:[], monthStart:{sold:0,profit:0}, badges:{}, flags:{}};
+    franchise:'volkner', reviews:[], months:[], monthStart:{sold:0,profit:0}, badges:{}, flags:{},
+    city:'paris', sites:{}, done:{}};
 }
 // complète une ancienne sauvegarde avec les nouveaux champs
 function migrate(d){
   const f=freshState();
   for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event','objs','objDone','upg','order','nextOrderAt','lotsAt','lastClientAt','newOrders','newSold','limited','nextLimitedAt','franchise','reviews','months','badges','flags']) if(d[k]===undefined) d[k]=f[k];
   if(!d.monthStart) d.monthStart={sold:d.stats.sold, profit:d.stats.profit};
+  if(!d.city) d.city='paris'; if(!d.sites) d.sites={}; if(!d.done) d.done={}; if(d.level>=6) d.done[d.city]=1;
   d.tab=({encheres:'achats',objectifs:'achats',stock:'garage',atelier:'garage'})[d.tab]||d.tab;
   if(!['achats','garage','showroom','equipe','profil'].includes(d.tab)) d.tab='achats';
   (d.cars||[]).forEach(c=>{ if(!c.hist) c.hist=[]; });
@@ -640,7 +724,7 @@ function fbInit(){
     fb.auth.onAuthStateChanged(u=>onUser(u).catch(e=>{fb.blocked=false;toast('Synchronisation impossible pour le moment.','bad');console.warn(e)}));
   }catch(e){ fb.ok=false; console.warn(e); }
 }
-const fortuneOf=()=>Math.round(S.money+S.cars.reduce((a,c)=>a+valueOf(c),0));
+const fortuneOf=()=>Math.round(S.money+S.cars.reduce((a,c)=>a+valueOf(c),0)+Object.values(S.sites||{}).reduce((a,x)=>a+x.money+(x.cars||[]).reduce((b,c)=>b+valueOf(c),0),0));
 function cloudSave(force){
   if(!fb.ok||!fb.user||fb.blocked) return;
   const wait=8000-(Date.now()-fb.lastCloud);
@@ -649,7 +733,7 @@ function cloudSave(force){
   const uid=fb.user.uid, ts=firebase.firestore.FieldValue.serverTimestamp();
   fb.db.collection('parties').doc(uid).set({save:JSON.stringify(S), level:+lvlNum(), money:Math.round(S.money), updatedAt:ts})
     .then(()=>{fb.syncedAt=Date.now();}).catch(e=>console.warn(e));
-  fb.db.collection('classement').doc(uid).set({pseudo:S.pseudo||'Joueur', garage:S.garage, avatar:S.avatar, level:+lvlNum(), fortune:fortuneOf(), sold:S.stats.sold, updatedAt:ts})
+  fb.db.collection('classement').doc(uid).set({pseudo:S.pseudo||'Joueur', garage:S.garage, avatar:S.avatar, level:+lvlNum(), fortune:fortuneOf(), sold:S.stats.sold+Object.values(S.sites||{}).reduce((a,x)=>a+x.stats.sold,0), cities:openCities().length, updatedAt:ts})
     .catch(e=>console.warn(e));
 }
 function adoptState(d){
@@ -735,7 +819,7 @@ function acctPanel(){
   <section class="panel glass"><h3>Classement</h3>
     ${b==null?`<p class="meta">Les 20 garages les plus riches, tous joueurs confondus.</p><button class="btn" data-act="board">Afficher le classement</button>`
     :b==='loading'?`<p class="meta">Chargement…</p>`:b==='error'?`<p class="meta">Impossible de charger le classement.</p><button class="btn" data-act="board">Réessayer</button>`
-    :`<ol class="board">${b.map((r,i)=>`<li class="${r.uid===fb.user.uid?'me-row':''}"><span class="rk num">${i+1}</span>${portrait(avatarSrc(r.avatar||1),'face sm','')}<span class="who"><b>${esc(r.pseudo||'Joueur')}</b><small>${esc(r.garage||'')} · niv. ${r.level||1}${r.level>=6.5?' <span class="trophy" title="Concessionnaire de l’année">★</span>':''}</small></span><b class="num">${eur(r.fortune||0)}</b></li>`).join('')}</ol>
+    :`<ol class="board">${b.map((r,i)=>`<li class="${r.uid===fb.user.uid?'me-row':''}"><span class="rk num">${i+1}</span>${portrait(avatarSrc(r.avatar||1),'face sm','')}<span class="who"><b>${esc(r.pseudo||'Joueur')}</b><small>${esc(r.garage||'')} · niv. ${r.level||1}${r.cities>1?` · ${r.cities} villes`:''}${r.level>=6.5?' <span class="trophy" title="Concessionnaire de l’année">★</span>':''}</small></span><b class="num">${eur(r.fortune||0)}</b></li>`).join('')}</ol>
       <button class="btn ghost" data-act="board">Actualiser</button>`}
   </section>`;
 }
@@ -761,7 +845,7 @@ const UPG = [
   {id:'lounge',   name:'Coin lounge',               price:25000, lvl:3, desc:'Fauteuils en cuir et bar : les clients acceptent de payer 5 % de plus.'},
 ];
 const has=id=>!!(S.upg&&S.upg[id]);
-const capPark=()=>lvl().parking+(has('parking')?2:0)+(star()>=1?4:0);
+const capPark=()=>Math.max(2,lvl().parking+(has('parking')?2:0)+(star()>=1?4:0)-(S.city==='lyon'?2:0));
 const capBays=()=>lvl().ateliers+(has('pont')?1:0)+(star()>=1?1:0);
 const LOTS_EVERY=5*60*1000;
 
@@ -781,12 +865,14 @@ function newLot(forceModel){
   else car=newCar(pick(lvl().tiers));
   if(forceModel){ S.uid--; car=newCar(0,forceModel); }
   const v=valueOf(car);
-  return {id:car.uid, car, start:Math.max(500,r100(v*rnd(.35,.5))), rivalMax:v*rnd(.62,.98)};
+  const cf=S.city==='lille'?.88:1;
+  return {id:car.uid, car, start:Math.max(500,r100(v*rnd(.35,.5)*cf)), rivalMax:v*rnd(.62,.98)*cf};
 }
-function refreshLots(){ S.lots=[]; for(let i=0;i<4;i++) S.lots.push(newLot());
+const lotCount=()=>S.city==='lehavre'?5:4;
+function refreshLots(){ S.lots=[]; for(let i=0;i<lotCount();i++) S.lots.push(newLot());
   if(star()>=3 && !S.lots.some(l=>{const m=model((l.car||l).modelId);return m&&(m.tier===4||m.classic);})){
     const ids=MODELS.filter(m=>m.tier===4||m.classic).map(m=>m.id), forced=pick(ids);
-    S.lots[3]=newLot(forced); }
+    S.lots[lotCount()-1]=newLot(forced); }
   S.lotsAt=now()+LOTS_EVERY; }
 function log(t){S.log.unshift({t,at:now()}); S.log=S.log.slice(0,60);}
 const parkingUsed=()=>S.cars.length;
@@ -1000,7 +1086,7 @@ function spawnClient(){
   if(sport && ac<.85 && key==='decide'){ key='negociateur'; P=PERSONAS.negociateur; }
   const vip=star()>=2 && sport && Math.random()<.35;
   if(vip){ key='decide'; P=PERSONAS.decide; }
-  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky*(has('lounge')?1.05:1)*(vip?1.2:1)*(star()>=5?1.05:1));
+  const max=r100(v*rnd(1.0,1.25)*(1+S.rep*.004)*P.maxF*picky*(has('lounge')?1.05:1)*(vip?1.2:1)*(star()>=5?1.05:1)*(S.city==='lille'?.92:S.city==='lyon'?1.12:1));
   // un acheteur décidé paie le prix affiché s'il rentre dans son budget, sinon il négocie
   if(key==='decide' && car.ask>max){ key='indecis'; P=PERSONAS.indecis; }
   const offer=key==='decide'?car.ask:r100(Math.min(car.ask,max)*P.offerF/P.maxF*rnd(.95,1.02));
@@ -1131,9 +1217,9 @@ const starRow=n=>`<span class="rstars" aria-label="${n} sur 5">${'★'.repeat(n)
 function newAd(){
   const car=newCar(pick(lvl().tiers)); car.inspected=true; car.status='stock';
   const real=JSON.parse(JSON.stringify(car));
-  const r=Math.random(); let scam=null;
-  if(r<.13){ scam='km'; real.km=car.km+Math.round(rnd(60000,120000)/1000)*1000; }
-  else if(r<.25){ scam='accident'; real.cond.carro=+Math.max(.1,car.cond.carro-rnd(.35,.55)).toFixed(2); real.cond.meca=+Math.max(.1,car.cond.meca-rnd(.15,.3)).toFixed(2); }
+  const r=Math.random(), sm=S.city==='lehavre'?1.8:1; let scam=null;
+  if(r<.13*sm){ scam='km'; real.km=car.km+Math.round(rnd(60000,120000)/1000)*1000; }
+  else if(r<.25*sm){ scam='accident'; real.cond.carro=+Math.max(.1,car.cond.carro-rnd(.35,.55)).toFixed(2); real.cond.meca=+Math.max(.1,car.cond.meca-rnd(.15,.3)).toFixed(2); }
   return {id:car.uid, car, real, scam, checked:false, price:r100(valueOf(car)*rnd(.62,.84)), seller:pick(CLIENT_NAMES), expiresAt:now()+rnd(150000,240000)};
 }
 function adInspect(id){
@@ -1231,7 +1317,7 @@ function upgrade(){
   const r=upgradeReqs(); if(!r||!r.list.every(x=>x.ok))return;
   S.money-=r.u.cost;
   if(r.isStar){ S.star=star()+1; log(`Nouveau palier : ${lvlNum()} ${r.name}.`); toast(`Palier ${lvlNum()} : ${r.name}. Débloque ${r.unlock}.`,'good'); }
-  else { S.level++; log(`Nouveau niveau : ${lvl().name}.`); toast(`Niveau ${S.level} : ${lvl().name}. Débloque ${lvl().unlock}.`,'good'); }
+  else { S.level++; if(S.level>=6){ const first=!S.done[S.city]; S.done[S.city]=1; if(first&&canOpenCity()) setTimeout(()=>toast('Une nouvelle ville est disponible sur la carte.','good',{label:'Carte',act:'mapOpen',id:''}),1200); } log(`Nouveau niveau : ${lvl().name}.`); toast(`Niveau ${S.level} : ${lvl().name}. Débloque ${lvl().unlock}.`,'good'); }
   if(staffSlots())refreshCandidates();
   commit();
 }
@@ -1544,18 +1630,65 @@ function stars(n){return `<span class="stars" aria-label="${n} sur 5">${'★'.re
    ===================================================================== */
 const TABS=[['achats','Achats'],['garage','Garage'],['showroom','Showroom'],['equipe','Équipe']];
 let hiring=null, recruit=null, fiche=null, todoOpen=false;
+const FR_PATH='M51,3 L57,6 L63,10 L70,13 L78,17 L86,20 L88,24 L85,32 L84,40 L80,45 L82,50 L80,56 L84,60 L83,66 L88,70 L91,74 L86,78 L80,80 L74,83 L68,82 L62,84 L58,88 L54,94 L48,95 L42,92 L34,91 L26,89 L19,87 L21,80 L23,72 L25,64 L22,57 L20,50 L14,46 L6,42 L2,38 L6,34 L14,34 L20,33 L24,31 L28,26 L34,23 L38,20 L42,18 L46,14 L48,8 Z';
+let mapOpen=false;
+function cityState(id){
+  if(id===S.city) return 'here';
+  if(S.sites[id]) return 'open';
+  return canOpenCity()?'free':'locked';
+}
+function mapSVG(big){
+  const sel=drafts.mapSel;
+  return `<svg viewBox="-4 -2 108 102" class="map ${big?'big':'mini'}" ${big?'role="group" aria-label="Carte des concessions"':'aria-hidden="true"'}>
+    <defs><radialGradient id="mapglow" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#f2a65a" stop-opacity=".16"/><stop offset="1" stop-color="#f2a65a" stop-opacity="0"/></radialGradient></defs>
+    <path d="${FR_PATH}" class="land"/><path d="${FR_PATH}" fill="url(#mapglow)"/>
+    <ellipse cx="95" cy="90" rx="2.2" ry="4.5" class="land"/>
+    ${ROUTES.map(([a,b])=>`<line x1="${CITIES[a].x}" y1="${CITIES[a].y}" x2="${CITIES[b].x}" y2="${CITIES[b].y}" class="route ${openCities().includes(a)&&openCities().includes(b)?'on':''}"/>`).join('')}
+    ${Object.entries(CITIES).map(([id,c])=>{const st=cityState(id), done=S.done[id];
+      const dot=`<g class="pin ${st} ${sel===id?'sel':''}" transform="translate(${c.x} ${c.y})">
+        ${st==='here'?`<circle r="${big?6:7}" class="ring"/>`:''}
+        <circle r="${big?3.2:3.6}" class="dot"/>${done&&big?`<text y="-5.5" class="star" text-anchor="middle">★</text>`:''}
+        ${big?`<text y="${c.y>80?-7:8.5}" x="0" text-anchor="middle" class="lbl">${c.name}</text>`:''}</g>`;
+      return big?`<a href="#" data-act="mapSel" data-id="${id}" aria-label="${c.name}">${dot}</a>`:dot;}).join('')}
+  </svg>`;
+}
+function miniMap(){
+  const n=openCities().length, total=Object.keys(CITIES).length, nu=canOpenCity();
+  return `<button class="minimap glass" data-act="mapOpen" aria-label="Ouvrir la carte des concessions">${mapSVG(false)}
+    <span class="mm-t"><small>Carte</small><b>${city().name}</b><span class="meta">${city().spec} · ${n} / ${total} villes</span>${nu?'<span class="mm-new">Nouvelle ville</span>':''}</span></button>`;
+}
+function mapHTML(){
+  const ids=Object.keys(CITIES), nDone=Object.keys(S.done).length;
+  return `<div class="overlay"><div class="modal mapmodal" role="dialog" aria-label="Carte des concessions">
+    <button class="btn ghost fiche-x" data-act="mapClose" aria-label="Fermer la carte">Fermer</button>
+    <div class="map-cols"><div class="map-l"><small class="kicker">Vos concessions</small><h2>La <em>carte</em></h2>
+      <p class="meta">Menez une concession jusqu'au niveau 6 pour en ouvrir une nouvelle. Une seule tourne à la fois : les autres attendent, figées, votre retour.</p>
+      ${mapSVG(true)}</div>
+    <div class="map-r">${ids.map(id=>{const c=CITIES[id], st=cityState(id), x=st==='open'?S.sites[id]:st==='here'?S:null;
+      const info=x?`<span class="meta">Niveau ${x.level>=6&&x.star?`6.${x.star}`:x.level} · ${eur(x.money)} · ${x.stats.sold} ventes</span>`:'';
+      let act='';
+      if(st==='here') act=`<span class="herelbl">Vous êtes ici</span>`;
+      else if(st==='open') act=`<button class="btn" data-act="goCity" data-id="${id}">Y aller</button>`;
+      else if(st==='free') act=drafts.confirmCity===id?`<div class="confirm"><small>Vous repartez de zéro à ${c.name} : 15 000 € et ${startRep()} de réputation. Vos autres concessions restent intactes.</small><div class="row"><button class="btn main" data-act="goCity" data-id="${id}">Ouvrir à ${c.name}</button><button class="btn ghost" data-act="cityNo">Annuler</button></div></div>`
+        :`<button class="btn main" data-act="cityAsk" data-id="${id}">Ouvrir une concession</button>`;
+      else act=`<span class="meta">Verrouillée : ${nDone>=openCities().length?'':'atteignez le niveau 6 dans toutes vos concessions'}</span>`;
+      return `<article class="citycard glass c-${st} ${drafts.mapSel===id?'sel':''}" id="city-${id}">
+        <div class="ct"><b>${c.name}</b>${S.done[id]?'<span class="trophy" title="Niveau 6 atteint">★</span>':''}<span class="spec">${c.spec}</span></div>
+        <p>${c.desc}</p>${info}<div class="row">${act}</div></article>`;}).join('')}</div></div>
+  </div></div>`;
+}
 function render(){
   document.body.classList.toggle('lv4',S.level>=4);
   document.body.classList.toggle('lv6',S.level>=6);
   document.getElementById('top').innerHTML=`
-    <div class="brand"><button class="mebtn" data-act="tab" data-id="profil" aria-label="Ouvrir votre profil">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}</button><div class="txt"><small>Cold Start</small><h1>${esc(S.garage)}</h1>
+    <div class="brand"><button class="mebtn" data-act="tab" data-id="profil" aria-label="Ouvrir votre profil">${portrait(avatarSrc(S.avatar),'me','Votre avatar')}</button><div class="txt"><small>Cold Start · ${city().name}</small><h1>${esc(S.garage)}</h1>
       <div class="lvl">Niveau ${lvlNum()} · ${lvlName()}${star()>=5?' <span class="trophy" aria-hidden="true">★</span>':''}</div></div></div>
-    <div class="stats">
+    <div class="hero-r">${miniMap()}<div class="stats">
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
       <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${capPark()}</b></div>
       ${fb.ok?(fb.user?`<button class="stat glass acct" data-act="tab" data-id="profil"><span>Compte</span><b>${esc(S.pseudo||'Joueur')}</b></button>`:`<button class="stat glass acct" data-act="acctOpen" data-id="login"><span>Compte</span><b>Se connecter</b></button>`):''}
-    </div>`;
+    </div></div>`;
   const waiting=S.clients.filter(c=>!c.handledBy).length;
   const pills={showroom:waiting, achats:S.order?1:0};
   document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-id="${k}">${l}${pills[k]?`<span class="pill">${pills[k]}</span>`:''}</button>`).join('');
@@ -1572,6 +1705,7 @@ function render(){
 function todoItems(){
   const t=now(), items=[];
   S.objs.filter(o=>o.done).forEach(o=>items.push({u:1,txt:'Objectif atteint',sub:o.label,btn:['Récupérer','claim',o.id]}));
+  if(canOpenCity()) items.push({u:1,txt:'Nouvelle ville disponible',sub:'Ouvrez une concession ailleurs sur la carte',btn:['Carte','mapOpen','']});
   const r=upgradeReqs(); if(r&&r.list.every(x=>x.ok)) items.push({u:1,txt:`${r.label} disponible`,sub:`${r.name} · ${eur(r.u.cost)}`,btn:[r.isStar?'Passer le palier':'Agrandir','upgrade','']});
   if(S.order){
     const m=S.cars.find(c=>matchesOrder(c)&&c.status!=='atelier');
@@ -1867,6 +2001,7 @@ function ficheHTML(car){
 
 function renderModal(){
   const m=document.getElementById('modal');
+  if(mapOpen){ m.innerHTML=mapHTML(); return; }
   if(auction){
     const a=auction, car=a.carCache, left=a.endsAt-now(), next=a.leader?a.price+stepOf(a.price):a.price;
     m.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-label="Enchère">
@@ -2003,7 +2138,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='counter')negoCounter();
   if(e.key==='Enter'&&e.target.id&&e.target.id.startsWith('ask-')) listCar(+e.target.id.slice(4)), fiche&&renderModal();
   if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role="button"][data-act]')){ e.preventDefault(); e.target.click(); }
-  if(e.key==='Escape'){ if(todoOpen){todoOpen=false;render();} else if(fiche){fiche=null;renderModal();} }
+  if(e.key==='Escape'){ if(mapOpen){mapOpen=false;renderModal();} else if(todoOpen){todoOpen=false;render();} else if(fiche){fiche=null;renderModal();} }
 });
 document.addEventListener('submit',e=>{if(e.target.id==='acct-form'){e.preventDefault();acctSubmit();}});
 document.addEventListener('click',e=>{
@@ -2014,6 +2149,12 @@ document.addEventListener('click',e=>{
   switch(b.dataset.act){
     case 'tab': S.tab=id; todoOpen=false; save(); render(); window.scrollTo({top:Math.min(window.scrollY,document.querySelector('nav').offsetTop)}); break;
     case 'todoOpen': todoOpen=!todoOpen; render(); break;
+    case 'mapOpen': mapOpen=true; todoOpen=false; drafts.mapSel=S.city; render(); renderModal(); break;
+    case 'mapClose': mapOpen=false; delete drafts.confirmCity; renderModal(); break;
+    case 'mapSel': e.preventDefault(); drafts.mapSel=id; renderModal(); { const el=document.getElementById('city-'+id); if(el) el.scrollIntoView({block:'nearest',behavior:'smooth'}); } break;
+    case 'cityAsk': drafts.confirmCity=id; drafts.mapSel=id; renderModal(); break;
+    case 'cityNo': delete drafts.confirmCity; renderModal(); break;
+    case 'goCity': goCity(id); break;
     case 'todoClose': todoOpen=false; render(); break;
     case 'fiche': fiche=n; todoOpen=false; render(); renderModal(); break;
     case 'ficheClose': fiche=null; renderModal(); break;
@@ -2084,7 +2225,7 @@ function seed(){ refreshLots(); S.ads=[newAd()]; S.nextAdAt=now()+60000; S.nextM
 function start(data){
   S=(data&&data.S)||load();
   if(!S){S=freshState(); seed();}
-  else if(!S.lotsAt){ S.lotsAt=now()+LOTS_EVERY; while(S.lots.length<4) S.lots.push(newLot()); }
+  else if(!S.lotsAt){ S.lotsAt=now()+LOTS_EVERY; while(S.lots.length<lotCount()) S.lots.push(newLot()); }
   ensureObjs();
   render(); renderModal();
   fbInit();
