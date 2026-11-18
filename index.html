@@ -303,6 +303,31 @@ h2 em{color:var(--amber)}
 .eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .status{font-size:13.5px;color:var(--muted)}
 .trophy{color:var(--amber)}
+.franchises{margin-top:22px;border-top:1px solid var(--edge-strong);padding-top:18px}
+.franchises h3{margin:0 0 4px;font-family:'Instrument Serif',serif;font-weight:400;font-size:24px}
+.frlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.fr{padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:6px}
+.fr b{font-size:17px}.fr p{margin:0;font-size:14px;line-height:1.45}
+.xp{display:grid;gap:4px}.xp .progress{height:4px}
+.raise{border:1px solid rgba(242,166,90,.45);background:rgba(242,166,90,.08);border-radius:12px;padding:10px;display:grid;gap:8px}
+.rstars{color:var(--amber);letter-spacing:2px;font-size:15px}.rstars i{font-style:normal;color:rgba(255,255,255,.18)}
+.reviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ravg,.review{padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ravg b{font-family:'Instrument Serif',serif;font-size:44px;font-weight:400;line-height:1}
+.review p{margin:0;font-size:14.5px;line-height:1.45}
+.stats-panel{grid-column:1/-1}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:8px 0 14px}
+.charts figure{margin:0;min-width:0}.charts figcaption{font-size:13px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.charts figcaption b{color:var(--fg)}
+.chart{width:100%;height:auto;display:block}
+.chart .axis{stroke:rgba(255,255,255,.15);stroke-width:1}
+.chart rect{fill:var(--amber);opacity:.85}.chart rect.neg{fill:var(--bad)}.chart rect.cur{opacity:.45}
+.chart .ln{fill:none;stroke:var(--amber);stroke-width:2.5;stroke-linejoin:round}.chart .dot{fill:var(--amber)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.badge{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--edge-strong);opacity:.5}
+.badge.on{opacity:1;border-color:rgba(242,166,90,.5);background:rgba(242,166,90,.07)}
+.badge .bi{color:var(--amber);font-size:18px;line-height:1.1}
+.badge b{display:block;font-size:14px}.badge small{color:var(--muted);font-size:12.5px}
 .chance{font-weight:700}
 .chance.fast,.gauge.fast b{color:var(--good)} .chance.normal,.gauge.normal b{color:var(--warn)} .chance.hard,.gauge.hard b{color:#ec9a5c} .chance.toohigh,.gauge.toohigh b{color:var(--bad)}
 .gauge{display:flex;flex-direction:column;gap:8px}
@@ -575,12 +600,14 @@ function freshState(){
     avatar:1, staff:[], candidates:[], nextPayAt:0, nextCandAt:0,
     ads:[], nextAdAt:0, monthIdx:0, nextMonthAt:0, event:0, objs:[], objDone:0,
     upg:{}, order:null, nextOrderAt:0, lotsAt:0, lastClientAt:0,
-    newOrders:[], newSold:0, limited:null, nextLimitedAt:0};
+    newOrders:[], newSold:0, limited:null, nextLimitedAt:0,
+    franchise:'volkner', reviews:[], months:[], monthStart:{sold:0,profit:0}, badges:{}, flags:{}};
 }
 // complète une ancienne sauvegarde avec les nouveaux champs
 function migrate(d){
   const f=freshState();
-  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event','objs','objDone','upg','order','nextOrderAt','lotsAt','lastClientAt','newOrders','newSold','limited','nextLimitedAt']) if(d[k]===undefined) d[k]=f[k];
+  for(const k of ['avatar','staff','candidates','nextPayAt','nextCandAt','ads','nextAdAt','monthIdx','nextMonthAt','event','objs','objDone','upg','order','nextOrderAt','lotsAt','lastClientAt','newOrders','newSold','limited','nextLimitedAt','franchise','reviews','months','badges','flags']) if(d[k]===undefined) d[k]=f[k];
+  if(!d.monthStart) d.monthStart={sold:d.stats.sold, profit:d.stats.profit};
   d.tab=({encheres:'achats',objectifs:'achats',stock:'garage',atelier:'garage'})[d.tab]||d.tab;
   if(!['achats','garage','showroom','equipe','profil'].includes(d.tab)) d.tab='achats';
   (d.cars||[]).forEach(c=>{ if(!c.hist) c.hist=[]; });
@@ -786,27 +813,41 @@ function makeNew(modelId,color,extra){
 }
 
 // --- Concession Volkner (niveau 5) : commandes de neuf, livraison en 1 minute, quota mensuel
-const NEW_LINE=['kesta','ostra','tarra','ion'];
-const QUOTA=()=>S.level>=6?4:3;
-const PRIME_PER=()=>S.level>=6?6000:4000;
+// la marque est Volkner au niveau 5 ; au niveau 6 on peut changer d'enseigne en payant
+const FRANCHISES={
+  volkner:{name:'Volkner', line:['kesta','ostra','tarra','ion'], quota:L=>L>=6?4:3, prime:L=>L>=6?6000:4000, dealer:.86, cost:150000, pitch:'Des voitures accessibles qui se vendent vite. Quota élevé, petite prime.'},
+  vortex: {name:'Vortex',  line:['vortex','vortexrs'], quota:()=>2, prime:()=>15000, dealer:.88, cost:150000, pitch:'Des sportives chères pour une clientèle exigeante. Quota bas, grosse prime.'},
+  brenner:{name:'Brenner', line:['s4'], quota:()=>3, prime:()=>9000, dealer:.87, cost:150000, pitch:'Le juste milieu, et parfois une S3 Evo restaurée par l’usine.'},
+  ferrano:{name:'Ferrano', line:['strada','sei','furia'], quota:()=>1, prime:()=>30000, dealer:.9, cost:300000, pitch:'La marque de luxe : très peu de ventes, des marges énormes.'},
+};
+const fr=()=>FRANCHISES[S.franchise]||FRANCHISES.volkner;
+const QUOTA=()=>fr().quota(S.level);
+const PRIME_PER=()=>fr().prime(S.level);
 const listPrice=id=>{const m=model(id);return r100(m.base*marketFx(m.type));};
-const dealerPrice=id=>r100(listPrice(id)*.86);
+const dealerPrice=id=>r100(listPrice(id)*fr().dealer);
+function switchFranchise(id){
+  const F=FRANCHISES[id]; if(!F||S.level<6||id===S.franchise)return;
+  if(S.money<F.cost)return toast('Trésorerie insuffisante pour changer d’enseigne.','bad');
+  const old=fr().name; S.money-=F.cost; S.stats.spent+=F.cost; S.franchise=id; S.newSold=0; S.limited=null; S.flags.switched=1; drafts.confirmFr=null;
+  log(`Changement d'enseigne : ${old} devient ${F.name} (${eur(F.cost)}).`);
+  toast(`Votre concession est désormais agréée ${F.name}. Nouveau quota : ${QUOTA()} par mois.`,'good'); commit();
+}
 function orderNew(id){
-  if(S.level<5)return;
+  if(S.level<5||!fr().line.includes(id))return;
   const m=model(id), color=drafts['nc-'+id]||m.colors[0][0], price=dealerPrice(id);
   if(parkingUsed()+S.newOrders.length>=capPark())return toast('Plus de place sur le parking pour cette livraison.','bad');
   if(S.money<price)return toast('Trésorerie insuffisante pour cette commande.','bad');
   S.money-=price;
   S.newOrders.push({id:S.uid++, modelId:id, color, price, start:now(), readyAt:now()+60000});
   const cn=m.colors.find(c=>c[0]===color)[1];
-  log(`Commande Volkner : ${m.brand} ${m.name} ${cn.toLowerCase()} pour ${eur(price)}.`);
+  log(`Commande ${fr().name} : ${m.brand} ${m.name} ${cn.toLowerCase()} pour ${eur(price)}.`);
   toast(`${m.brand} ${m.name} commandée. Livraison dans une minute.`,'good'); commit();
 }
 function newOrdersTick(t){
   let ch=false;
   S.newOrders=S.newOrders.filter(o=>{ if(t<o.readyAt) return true;
-    const car=makeNew(o.modelId,o.color); acquire(car,o.price,'Livrée neuve par Volkner',true);
-    toast(`Livraison Volkner : ${carName(car)} neuve sur le parking.`,'good',{label:'Mettre en vente',act:'fiche',id:car.uid});
+    const car=makeNew(o.modelId,o.color); acquire(car,o.price,`Livrée neuve par ${model(o.modelId).brand}`,true);
+    toast(`Livraison ${model(o.modelId).brand} : ${carName(car)} neuve sur le parking.`,'good',{label:'Mettre en vente',act:'fiche',id:car.uid});
     ch=true; return false; });
   return ch;
 }
@@ -815,9 +856,9 @@ function quotaReview(){
   if(S.level<5) return;
   const q=QUOTA(), n=S.newSold||0;
   if(n>=q){ const prime=PRIME_PER()*n; S.money+=prime; S.rep=clamp(S.rep+3,0,100);
-    log(`Quota Volkner atteint (${n} / ${q}) : prime de ${eur(prime)}.`); toast(`Quota Volkner atteint : prime de ${eur(prime)} et +3 de réputation.`,'good'); }
+    log(`Quota ${fr().name} atteint (${n} / ${q}) : prime de ${eur(prime)}.`); toast(`Quota ${fr().name} atteint : prime de ${eur(prime)} et +3 de réputation.`,'good'); }
   else { S.rep=clamp(S.rep-3,0,100);
-    log(`Quota Volkner manqué (${n} / ${q}).`); toast(`Quota Volkner manqué (${n} / ${q}) : la marque est déçue, −3 de réputation.`,'bad'); }
+    log(`Quota ${fr().name} manqué (${n} / ${q}).`); toast(`Quota ${fr().name} manqué (${n} / ${q}) : la marque est déçue, −3 de réputation.`,'bad'); }
   S.newSold=0;
 }
 
@@ -828,7 +869,8 @@ function limitedTick(t){
   if(S.limited){ if(t<S.limited.endsAt) return false; toast(`L'édition limitée ${S.limited.edition} est partie chez un autre concessionnaire.`,'bad'); S.limited=null; S.nextLimitedAt=t+rnd(8,11)*60000; return true; }
   if(!S.nextLimitedAt){ S.nextLimitedAt=t+rnd(4,6)*60000; return false; }
   if(t<S.nextLimitedAt) return false;
-  const m=pick(MODELS.filter(x=>x.tier>=3&&x.tier<=4&&!x.classic)), col=pick(m.colors);
+  const pool=fr().line.map(model).filter(x=>x&&x.tier!==1);
+  const m=S.franchise==='brenner'&&Math.random()<.45?model('s3evo'):pick(pool.length?pool:MODELS.filter(x=>x.tier>=3&&x.tier<=4&&!x.classic)), col=pick(m.colors);
   S.limited={id:S.uid++, modelId:m.id, color:col[0], colorN:col[1], edition:pick(EDITIONS), price:r100(listPrice(m.id)*1.1), endsAt:t+4*60000};
   toast(`Édition limitée disponible : ${m.brand} ${m.name} ${S.limited.edition}, un seul exemplaire.`,'',{label:'Voir',act:'tab',id:'achats'});
   return true;
@@ -837,7 +879,8 @@ function buyLimited(){
   const L=S.limited; if(!L)return;
   if(parkingUsed()+S.newOrders.length>=capPark())return toast('Parking plein : libérez une place d’abord.','bad');
   if(S.money<L.price)return toast('Trésorerie insuffisante.','bad');
-  const car=makeNew(L.modelId,L.color,{limited:true, edition:L.edition});
+  const lm=model(L.modelId);
+  const car=makeNew(L.modelId,L.color,lm.classic?{limited:true, edition:L.edition, neuf:false, year:ri(lm.classic[0],lm.classic[1]), km:ri(25,60)*1000, cond:{meca:.95,carro:.95,inter:.95,pneus:.95}}:{limited:true, edition:L.edition});
   acquire(car,L.price,`Édition limitée ${L.edition} achetée au constructeur`);
   log(`Édition limitée : ${carName(car)} pour ${eur(L.price)}.`);
   toast(`${carName(car)} est à vous. Les collectionneurs vont se battre pour elle.`,'good',{label:'Fiche',act:'fiche',id:car.uid});
@@ -964,7 +1007,7 @@ function spawnClient(){
   const trade=Math.random()<(star()>=4?.45:.3)?newTrade():null, pat=P.patience+(has('cafe')?1:0);
   const c={id:S.uid++, name:(vip?'VIP · ':'')+pick(CLIENT_NAMES), vip, persona:key, carUid:car.uid, max, offer:Math.min(offer,car.ask), trade,
     patience:pat, patienceMax:pat, arrivedAt:now(), expiresAt:now()+120000+30000*skillSum('accueil'), handledBy:null};
-  S.clients.push(c);
+  S.clients.push(c); staffOf('accueil').forEach(e=>{ e.xpAcc=(e.xpAcc||0)+1; if(e.xpAcc>=2){ e.xpAcc=0; gainXp(e,1); } });
   if(key==='decide') toast(`${c.name} veut la ${carName(car)} au prix affiché.`,'',{label:'Vendre',act:'buyDirect',id:c.id});
   else toast(sport&&ac<.7?`Un amateur regarde la ${carName(car)}, mais son état le refroidit.`:`${c.name} attend au showroom pour la ${carName(car)}.`,'',{label:'Recevoir',act:'nego',id:c.id});
 }
@@ -1022,6 +1065,23 @@ function negoCafe(){
   nego.msg=pick([`Merci, il est bon ce café. Bon… je peux monter à ${eur(c.offer)}.`,`C'est gentil. Laissez-moi réfléchir… ${eur(c.offer)}, ça irait ?`]);
   commit(); renderModal();
 }
+// l'essai routier : le client se projette, mais gare à l'accrochage
+function negoEssai(){
+  const c=S.clients.find(x=>x.id===nego.clientId); if(!c||c.essai)return;
+  const car=carOf(c); c.essai=true;
+  if(Math.random()<.08){
+    car.cond.carro=+Math.max(.2,car.cond.carro-.12).toFixed(2); hist(car,`Accrochage pendant l'essai de ${c.name}`);
+    c.patience=Math.max(1,c.patience-1);
+    nego.msg=`Aïe… j'ai accroché un plot en manœuvrant. Désolé. Bon, je reste à ${eur(c.offer)}.`;
+    toast(`Accrochage pendant l'essai : la carrosserie de la ${carName(car)} a pris un coup.`,'bad');
+    commit(); return renderModal();
+  }
+  c.patience++; c.patienceMax++; c.max=r100(c.max*1.06);
+  if(c.max>=car.ask && Math.random()<.4) return sell(c,car.ask,`Quel plaisir à conduire ! C'est décidé, je la prends à ${eur(car.ask)}.`);
+  c.offer=Math.min(car.ask,r100(c.offer+(c.max-c.offer)*.25));
+  nego.msg=pick([`Elle est vraiment agréable sur la route. Je peux monter à ${eur(c.offer)}.`,`Je me vois bien au volant… ${eur(c.offer)}, ça vous va ?`]);
+  commit(); renderModal();
+}
 function negoAccept(){const c=S.clients.find(x=>x.id===nego.clientId); if(c)sell(c,c.offer,'Parfait, on fait comme ça.');}
 function negoDismiss(){S.clients=S.clients.filter(x=>x.id!==nego.clientId); nego=null; commit(); renderModal();}
 function sell(c,price,msg){
@@ -1031,7 +1091,8 @@ function sell(c,price,msg){
   if(car.cond.meca<.45) S.returns.push({at:now()+rnd(60000,150000), name:c.name, car:carName(car), refund:r100(price*.12)});
   S.cars=S.cars.filter(x=>x.uid!==car.uid);
   S.clients=S.clients.filter(x=>x.id!==c.id&&x.carUid!==car.uid);
-  log(`Vente : ${carName(car)} à ${c.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}).`);
+  const rs=addReview(car,price,v,c,nego&&nego.geste?.5:0);
+  log(`Vente : ${carName(car)} à ${c.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}). Avis ${rs}/5.`);
   saleEvent(car,profit,c.persona!=='decide');
   Object.assign(nego,{msg,done:true,result:'sold',price,profit,trade:c.trade||null});
   commit(); renderModal();
@@ -1046,6 +1107,25 @@ function tradeAccept(){
   objEvent('trade'); nego.trade=null; nego.tradeDone='ok'; commit(); renderModal();
 }
 function tradeRefuse(){ if(!nego)return; nego.trade=null; nego.tradeDone='no'; renderModal(); }
+
+// --- Avis clients : une note après chaque vente, qui pèse sur la réputation
+const REVIEW_TXT={5:['Accueil parfait, voiture impeccable. Je recommande les yeux fermés.','Un vrai pro, la voiture est comme neuve.','Rien à redire, je reviendrai.'],
+  4:['Très bonne expérience, voiture conforme.','Bon contact et prix honnête.','Satisfait de mon achat.'],
+  3:['Correct, sans plus.','La voiture va bien, le prix était un peu élevé.','Une affaire normale.'],
+  2:['Voiture moins propre que prévu.','Un peu cher pour l’état de la voiture.','Déçu par quelques détails.'],
+  1:['Je ne remettrai pas les pieds ici.','Voiture en mauvais état et trop chère.','Très mauvaise expérience.']};
+function addReview(car,price,v,c,extra){
+  let sc=3; const ac=avgCond(car.cond), ratio=price/Math.max(1,v);
+  sc+=ac>=.9?1:ac<.6?-1:0; sc+=ratio<=1.05?1:ratio>1.25?-1:0;
+  if(car.cond.meca<.45) sc-=1;
+  sc+=((c&&c.coffee)?.5:0)+((c&&c.essai)?.5:0)+(extra||0);
+  const stars=clamp(Math.round(sc),1,5);
+  S.reviews.unshift({stars, name:c?c.name.replace('VIP · ',''):'Client', car:carName(car), text:pick(REVIEW_TXT[stars]), at:now()}); S.reviews=S.reviews.slice(0,40);
+  if(stars===5){ S.rep=clamp(S.rep+1,0,100); S.flags.five=(S.flags.five||0)+1; } else if(stars<=2) S.rep=clamp(S.rep-1,0,100);
+  return stars;
+}
+const reviewAvg=()=>S.reviews.length?S.reviews.reduce((a,r)=>a+r.stars,0)/S.reviews.length:0;
+const starRow=n=>`<span class="rstars" aria-label="${n} sur 5">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`;
 
 // --- Annonces de particuliers : prix bas, mais une sur quatre cache un défaut
 function newAd(){
@@ -1084,6 +1164,8 @@ function marketTick(t){
   if(!S.nextMonthAt){ S.nextMonthAt=t+MONTH; return false; }
   if(t<S.nextMonthAt) return false;
   quotaReview();
+  S.months.push({season:SEASONS[S.monthIdx%4].name, sales:S.stats.sold-S.monthStart.sold, profit:S.stats.profit-S.monthStart.profit, money:Math.round(S.money)});
+  S.months=S.months.slice(-12); S.monthStart={sold:S.stats.sold, profit:S.stats.profit};
   S.monthIdx++; S.nextMonthAt=t+MONTH;
   S.event=Math.random()<.5?ri(1,EVENTS.length):0;
   const se=SEASONS[S.monthIdx%4];
@@ -1112,7 +1194,7 @@ function deliverOrder(uid){
   log(`Commande livrée : ${carName(car)} à ${o.name} pour ${eur(price)} (marge ${profit>=0?'+':''}${eur(profit)}).`);
   saleEvent(car,profit,false);
   toast(`${o.name} est ravi : ${eur(price)} encaissés et +3 de réputation.`,'good');
-  S.order=null; S.nextOrderAt=now()+(S.level>=6?rnd(5,8):rnd(9,13))*60000; fiche=null; renderModal(); commit();
+  S.flags.order=(S.flags.order||0)+1; S.order=null; S.nextOrderAt=now()+(S.level>=6?rnd(5,8):rnd(9,13))*60000; fiche=null; renderModal(); commit();
 }
 function orderTick(t){
   if(S.order){
@@ -1211,8 +1293,31 @@ function vendorSell(v,c,car,t){
   S.cars=S.cars.filter(x=>x.uid!==car.uid);
   S.clients=S.clients.filter(x=>x.carUid!==car.uid);
   if(fiche===car.uid) fiche=null;
+  addReview(car,price,v0,c,v.skill>=4?.5:0); gainXp(v,2);
   log(`${v.name} a vendu la ${carName(car)} à ${c.name} pour ${eur(price)} (commission ${eur(fee)}).`);
   toast(`${v.name.split(' ')[0]} a vendu la ${carName(car)} pour ${eur(price)}.`,'good');
+}
+// expérience : chaque tâche fait progresser ; en montant en compétence, on demande une augmentation
+const xpNeed=e=>6+e.skill*4;
+function gainXp(e,n){
+  if(!e||e.skill>=5)return;
+  e.xp=(e.xp||0)+n;
+  if(e.xp<xpNeed(e))return;
+  e.xp=0; e.skill++;
+  log(`${e.name} progresse : ${e.skill} étoiles.`);
+  e.raise={amount:Math.round(e.salary*rnd(.14,.22)/50)*50, until:now()+3*60000};
+  toast(`${e.name.split(' ')[0]} passe à ${e.skill} étoiles et demande une augmentation.`,'good',{label:'Répondre',act:'tab',id:'equipe'});
+}
+function raiseAnswer(id,ok){
+  const e=S.staff.find(x=>x.id===id); if(!e||!e.raise)return;
+  if(ok){ e.salary+=e.raise.amount; log(`Augmentation accordée à ${e.name} : +${eur(e.raise.amount)} par mois.`); toast(`${e.name.split(' ')[0]} est ravi${LOOK_SEX[e.role]&&LOOK_SEX[e.role][e.look-1]==='f'?'e':''} : merci patron.`,'good'); e.raise=null; }
+  else raiseRefused(e);
+  commit();
+}
+function raiseRefused(e){
+  e.raise=null;
+  if(Math.random()<.5){ S.staff=S.staff.filter(x=>x.id!==e.id); log(`${e.name} a démissionné après un refus d'augmentation.`); toast(`${e.name} a démissionné : pas d'augmentation, pas de motivation.`,'bad'); }
+  else { log(`${e.name} reste, mais sans augmentation.`); toast(`${e.name.split(' ')[0]} reste, mais n'est pas content.`); }
 }
 function staffTick(t){
   let changed=false;
@@ -1223,6 +1328,7 @@ function staffTick(t){
     toast(S.money<0?`Salaires versés (${eur(p)}). Votre trésorerie est dans le rouge.`:`Salaires du mois versés : ${eur(p)}.`, S.money<0?'bad':'');
     changed=true;
   }
+  for(const e of S.staff.slice()) if(e.raise && t>=e.raise.until){ raiseRefused(e); changed=true; }
   // vendeurs : prennent un client qui attend depuis plus de 20 s et négocient pendant un moment
   for(const v of staffOf('vendeur')){
     const tk=v.task;
@@ -1243,7 +1349,7 @@ function staffTick(t){
       if(!car){ p.task=null; changed=true; continue; }
       if(t>=tk.endsAt){
         car.cond.carro=bump(car.cond.carro,.03*p.skill); car.cond.inter=bump(car.cond.inter,.04*p.skill);
-        car.prepping=null; hist(car,`Préparée par ${p.name}`);
+        car.prepping=null; hist(car,`Préparée par ${p.name}`); gainXp(p,1);
         toast(`${p.name.split(' ')[0]} a fini de préparer la ${carName(car)}.`,'good',{label:'Fiche',act:'fiche',id:car.uid});
         p.task=null; changed=true;
       }
@@ -1293,7 +1399,7 @@ function objTemplates(){
   ];
   if(staffSlots() && S.staff.length<staffSlots()) t.push({type:'hire', n:1, d:.7, label:()=>'Recruter un employé'});
   if(L>=4) t.push({type:'sellSport', n:2, d:1.5, label:n=>`Vendre ${n} sportives`});
-  if(L>=5) t.push({type:'sellNew', n:2, d:1.1, label:n=>`Vendre ${n} voitures neuves Volkner`});
+  if(L>=5) t.push({type:'sellNew', n:2, d:1.1, label:n=>`Vendre ${n} voitures neuves ${fr().name}`});
   return t;
 }
 function newObjective(){
@@ -1320,7 +1426,8 @@ function objEvent(type,amount=1,data){
     if(o.progress>=o.target){ o.progress=o.target; o.done=true; objDoneToast(o); }
   }
 }
-function saleEvent(car,profit,nego){ if(car.neuf&&!car.limited) S.newSold=(S.newSold||0)+1; objEvent('sale',1,{profit,nego,sport:model(car.modelId).tier>=3&&model(car.modelId).tier<=4,neuf:!!car.neuf}); }
+function saleEvent(car,profit,nego){ const sm=model(car.modelId);
+  if(sm.tier===3) S.flags.sport=1; if(sm.tier===4) S.flags.super=1; if(sm.classic) S.flags.classic=1; if(car.limited) S.flags.limited=1; if(profit>=50000) S.flags.big=1; if(car.neuf&&!car.limited) S.newSold=(S.newSold||0)+1; objEvent('sale',1,{profit,nego,sport:model(car.modelId).tier>=3&&model(car.modelId).tier<=4,neuf:!!car.neuf}); }
 function objTick(){
   let ch=ensureObjs();
   for(const o of S.objs) if(o.type==='rep' && !o.done){
@@ -1348,7 +1455,7 @@ function tick(){
   S.cars.forEach(car=>{ if(car.status==='atelier'&&t>=car.job.endsAt){
     const k=car.job.k; car.cond[k]=.95;
     if(car.relist){ car.status='vente'; car.ask=car.relist; } else car.status='stock';
-    delete car.relist; delete car.job; objEvent('repair');
+    delete car.relist; delete car.job; objEvent('repair'); if(staffOf('mecano').length) gainXp(pick(staffOf('mecano')),1);
     toast(`Atelier terminé : ${carName(car)}, ${COMPS[k].label.toLowerCase()} remise à neuf.`,'good',{label:car.status==='vente'?'Fiche':'Mettre en vente',act:'fiche',id:car.uid});
     changed=true; }});
   if(objTick()) changed=true;
@@ -1373,7 +1480,33 @@ function tick(){
   else updateLive();
   if(auction&&!auction.done)renderModal();
 }
-function commit(){save(); render();}
+// --- Succès
+const BADGES=[
+  {id:'sale1', name:'Première vente', desc:'Vendre une première voiture', ok:()=>S.stats.sold>=1},
+  {id:'sale25', name:'Vendeur confirmé', desc:'Vendre 25 voitures', ok:()=>S.stats.sold>=25},
+  {id:'sale100', name:'Centurion', desc:'Vendre 100 voitures', ok:()=>S.stats.sold>=100},
+  {id:'sale250', name:'Machine à vendre', desc:'Vendre 250 voitures', ok:()=>S.stats.sold>=250},
+  {id:'sport', name:'Sang sportif', desc:'Vendre une sportive', ok:()=>!!S.flags.sport},
+  {id:'super', name:'Supercar', desc:'Vendre une supercar', ok:()=>!!S.flags.super},
+  {id:'classic', name:'Collectionneur', desc:'Vendre une voiture de collection', ok:()=>!!S.flags.classic},
+  {id:'limited', name:'Pièce unique', desc:'Vendre une édition limitée', ok:()=>!!S.flags.limited},
+  {id:'big', name:'Coup de maître', desc:'Faire 50 000 € de marge sur une vente', ok:()=>!!S.flags.big},
+  {id:'order', name:'Sur mesure', desc:'Livrer 3 commandes de collectionneurs', ok:()=>(S.flags.order||0)>=3},
+  {id:'five', name:'Cinq étoiles', desc:'Recevoir 10 avis à 5 étoiles', ok:()=>(S.flags.five||0)>=10},
+  {id:'team', name:'Patron', desc:'Avoir 8 employés', ok:()=>S.staff.length>=8},
+  {id:'expert', name:'Formateur', desc:'Faire monter un employé à 5 étoiles', ok:()=>S.staff.some(e=>e.skill>=5&&e.xp!==undefined)},
+  {id:'million', name:'Millionnaire', desc:'Avoir 1 000 000 € de trésorerie', ok:()=>S.money>=1e6},
+  {id:'rep90', name:'Réputation en or', desc:'Atteindre 90 de réputation', ok:()=>S.rep>=90},
+  {id:'lvl6', name:'Concession de luxe', desc:'Atteindre le niveau 6', ok:()=>S.level>=6},
+  {id:'switch', name:'Nouvelle enseigne', desc:'Changer de marque agréée', ok:()=>!!S.flags.switched},
+  {id:'year', name:'Concessionnaire de l’année', desc:'Atteindre le palier 6.5', ok:()=>star()>=5},
+];
+function checkBadges(){
+  const got=BADGES.filter(b=>!S.badges[b.id]&&b.ok()); if(!got.length)return;
+  got.forEach(b=>{ S.badges[b.id]=now(); log(`Succès débloqué : ${b.name}.`); });
+  toast(got.length===1?`Succès débloqué : ${got[0].name}.`:`${got.length} succès débloqués.`,'good',{label:'Voir',act:'tab',id:'profil'});
+}
+function commit(){checkBadges(); save(); render();}
 
 /* =====================================================================
    4. VISUEL — photos des voitures posées dans le décor
@@ -1453,8 +1586,9 @@ function todoItems(){
   if(ready.length>3) items.push({u:0,txt:`Et ${ready.length-3} autre${ready.length-3>1?'s':''} sur le parking`,btn:['Garage','tab','garage']});
   if(ateliersUsed()<capBays() && ready.some(needsRepair)) items.push({u:0,txt:'Un pont est libre',sub:'Des voitures attendent une réparation',btn:['Garage','tab','garage']});
   if(S.staff.length&&S.nextPayAt&&S.money<payroll()) items.push({u:1,warn:1,txt:'Trésorerie trop basse pour la paie',sub:`${eur(payroll())} à verser`,ends:S.nextPayAt});
+  S.staff.filter(e=>e.raise).forEach(e=>items.push({u:1,txt:`${e.name} demande une augmentation`,sub:`+${eur(e.raise.amount)} par mois`,ends:e.raise.until,btn:['Répondre','tab','equipe']}));
   if(S.limited) items.push({u:1,txt:`Édition limitée ${S.limited.edition}`,sub:`${carNameM(S.limited.modelId)} · ${eur(S.limited.price)}`,ends:S.limited.endsAt,btn:['Voir','tab','achats']});
-  if(S.level>=5 && (S.newSold||0)<QUOTA()) items.push({u:0,txt:`Quota Volkner : ${S.newSold||0} / ${QUOTA()}`,sub:'Voitures neuves vendues ce mois',ends:S.nextMonthAt,btn:['Commander','tab','achats']});
+  if(S.level>=5 && (S.newSold||0)<QUOTA()) items.push({u:0,txt:`Quota ${fr().name} : ${S.newSold||0} / ${QUOTA()}`,sub:'Voitures neuves vendues ce mois',ends:S.nextMonthAt,btn:['Commander','tab','achats']});
   if(S.lotsAt-t<60000) items.push({u:0,txt:'Nouvelle vente aux enchères',ends:S.lotsAt,btn:['Achats','tab','achats']});
   return items;
 }
@@ -1487,7 +1621,7 @@ function lotRange(c){
 }
 function limitedCard(){
   const L=S.limited; if(!L) return '';
-  const m=model(L.modelId), car={modelId:L.modelId, year:YEAR, km:0, cond:{meca:1,carro:1,inter:1,pneus:1}, limited:true};
+  const m=model(L.modelId), car={modelId:L.modelId, year:m.classic?m.classic[0]+2:YEAR, km:0, cond:{meca:1,carro:1,inter:1,pneus:1}, limited:true};
   return `<section class="order glass limited"><div><span class="eyebrow">Édition limitée · un seul exemplaire</span><b>${m.brand} ${m.name} ${esc(L.edition)}, ${esc(L.colorN.toLowerCase())}</b>
     <small>Prix constructeur ${eur(L.price)} · valeur pour les collectionneurs environ ${eur(valueOf(car))}. Offre valable encore <span class="num" data-ends="${L.endsAt}">${mmss(L.endsAt-now())}</span>.</small></div>
     <div class="row"><button class="btn main" data-act="buyLimited" ${S.money<L.price?'disabled':''}>Acheter · ${eur(L.price)}</button></div></section>`;
@@ -1496,12 +1630,12 @@ function concessionCard(){
   if(S.level<5) return '';
   const q=QUOTA(), n=S.newSold||0;
   return `<section class="concession glass">
-    <div class="conc-head"><div><span class="eyebrow">Concession agréée</span><b class="t">Volkner · commandes de neuf</b><span class="meta">Achat au prix concession, revente au prix catalogue. Livraison en une minute.</span></div>
+    <div class="conc-head"><div><span class="eyebrow">Concession agréée</span><b class="t">${fr().name} · commandes de neuf</b><span class="meta">Achat au prix concession, revente au prix catalogue. Livraison en une minute.</span></div>
       <div class="quota"><div class="row" style="justify-content:space-between"><span>Quota du mois</span><b class="num">${n} / ${q}</b></div>
         <div class="progress"><i style="width:${Math.min(100,n/q*100)}%"></i></div>
         <small class="meta">Prime de ${eur(PRIME_PER())} par voiture neuve vendue si le quota est atteint. Bilan dans <span class="num" data-ends="${S.nextMonthAt}">${mmss(S.nextMonthAt-now())}</span>.</small></div></div>
     ${S.newOrders.length?`<ul class="deliv">${S.newOrders.map(o=>{const m=model(o.modelId);return `<li><div><b>${m.brand} ${m.name} en livraison</b>${pbar(o.start,o.readyAt)}</div><span class="num meta" data-ends="${o.readyAt}">${mmss(o.readyAt-now())}</span></li>`}).join('')}</ul>`:''}
-    <div class="cat">${NEW_LINE.map(id=>{const m=model(id), sel=drafts['nc-'+id]||m.colors[0][0], col=m.colors.find(c=>c[0]===sel);
+    <div class="cat">${fr().line.map(id=>{const m=model(id), sel=drafts['nc-'+id]||m.colors[0][0], col=m.colors.find(c=>c[0]===sel);
       const car={uid:0, modelId:id, year:YEAR, km:0, color:{s:col[0],n:col[1]}, cond:{meca:1,carro:1,inter:1,pneus:1}, inspected:true, status:'lot', neuf:true};
       const lp=listPrice(id), dp=dealerPrice(id);
       return `<article class="card glass">${stage(car,{scene:'expo',tagL:'Neuve'})}<div class="body">
@@ -1510,6 +1644,10 @@ function concessionCard(){
         <div class="swatches">${m.colors.map(c=>`<button class="btn" data-act="ncColor" data-id="${id}" data-k="${c[0]}" aria-pressed="${c[0]===sel}">${c[1]}</button>`).join('')}</div>
         <div class="row end"><button class="btn main" data-act="orderNew" data-id="${id}" ${S.money<dp?'disabled':''}>Commander</button></div>
       </div></article>`}).join('')}</div>
+    ${S.level>=6?`<div class="franchises"><h3>Changer d'enseigne</h3><p class="meta">Vos commandes en cours sont livrées normalement. Le quota du mois repart à zéro.</p>
+      <div class="frlist">${Object.entries(FRANCHISES).filter(([k])=>k!==S.franchise).map(([k,F])=>`<div class="fr glass"><b>${F.name}</b><span class="meta">${F.line.map(id=>model(id).name).join(', ')}</span><p>${F.pitch}</p>
+        <span class="meta">Quota ${F.quota(S.level)} par mois · prime ${eur(F.prime(S.level))} par voiture</span>
+        <div class="row">${drafts.confirmFr===k?`<button class="btn main" data-act="franchise" data-id="${k}">Confirmer ${eur(F.cost)}</button><button class="btn ghost" data-act="franchise0">Annuler</button>`:`<button class="btn" data-act="franchise1" data-id="${k}" ${S.money<F.cost?'disabled':''}>Passer chez ${F.name} · ${eur(F.cost)}</button>`}</div></div>`).join('')}</div></div>`:''}
   </section>`;
 }
 function viewAchats(){
@@ -1582,6 +1720,9 @@ function viewShowroom(){
     ${v?`<div class="handled">${portrait(empSrc('vendeur',v.look),'face sm',v.name)}<div style="flex:1;min-width:0"><small class="meta">${esc(v.name.split(' ')[0])} négocie…</small>${tk?pbar(tk.start,tk.endsAt):''}</div></div>`
       :`<div class="row"><span class="meta">Part dans <span class="num" data-ends="${c.expiresAt}">${mmss(c.expiresAt-now())}</span></span>${c.persona==='decide'?`<button class="btn main" data-act="buyDirect" data-id="${c.id}">Vendre à ${eur(c.offer)}</button>`:`<button class="btn main" data-act="nego" data-id="${c.id}">Recevoir</button>`}</div>`}</div>`}).join('')}</div>`
   :`<div class="empty">${cars.length?`Aucun client pour l'instant. Le prochain devrait arriver dans <span class="num" data-ends="${S.nextClientAt}">${mmss(Math.max(0,S.nextClientAt-now()))}</span>.`:'Exposez une voiture depuis le garage pour attirer des clients.'}</div>`}
+  ${S.reviews.length?`<h2>Avis <em>clients</em></h2>
+  <div class="reviews"><div class="ravg glass"><b class="num">${reviewAvg().toFixed(1).replace('.',',')}</b>${starRow(Math.round(reviewAvg()))}<small class="meta">${S.reviews.length} avis récents · un 5 étoiles donne +1 de réputation, 2 étoiles ou moins en retire 1</small></div>
+    ${S.reviews.slice(0,3).map(r=>`<div class="review glass">${starRow(r.stars)}<p>« ${esc(r.text)} »</p><small class="meta">${esc(r.name)} · ${esc(r.car)}</small></div>`).join('')}</div>`:''}
   <h2>En <em>exposition</em></h2>
   ${cars.length?`<div class="grid">${cars.map(c=>{const g=chance(c,c.ask);return `<article class="card glass">${stage(c,{link:1,tagL:'Exposée',scene:'expo'})}<div class="body">${head(c,`<span class="price num">${eur(c.ask)}</span>`)}<div class="status">Valeur ${eur(valueOf(c))} · <span class="chance ${g.cls}">${g.label}</span></div><div class="row end"><button class="btn" data-act="fiche" data-id="${c.uid}">Changer le prix</button><button class="btn ghost" data-act="unlist" data-id="${c.uid}">Retirer</button></div></div></article>`}).join('')}</div>`:`<div class="empty">Rien en exposition.</div>`}`;
 }
@@ -1606,6 +1747,8 @@ function viewEquipe(){
     for(let i=0;i<slots;i++){ const e=emps[i];
       if(e){ const tk=empTask(e);
         cells.push(`<div class="emp glass"><div class="top">${portrait(empSrc(e.role,e.look),'face',e.name)}<div><b>${esc(e.name)}</b>${stars(e.skill)}<small class="meta">${eur(e.salary)} par mois</small></div></div>
+          ${e.skill<5?`<div class="xp"><small class="meta">Expérience ${e.xp||0} / ${xpNeed(e)}</small><div class="progress"><i style="width:${(e.xp||0)/xpNeed(e)*100}%"></i></div></div>`:`<small class="meta">Compétence maximale</small>`}
+          ${e.raise?`<div class="raise"><small>Demande une augmentation de <b class="num">${eur(e.raise.amount)}</b> par mois · <span class="num" data-ends="${e.raise.until}">${mmss(e.raise.until-now())}</span></small><div class="row"><button class="btn main" data-act="raiseOk" data-id="${e.id}">Accepter</button><button class="btn ghost" data-act="raiseNo" data-id="${e.id}">Refuser</button></div></div>`:''}
           <div class="task"><small>En ce moment</small><div>${esc(tk.label)}</div>${tk.end?pbar(tk.start,tk.end):''}</div>
           <div class="row">${drafts.confirmFire===e.id?`<span class="meta">Indemnité de ${eur(e.salary)}.</span><button class="btn danger" data-act="fire" data-id="${e.id}">Confirmer</button><button class="btn ghost" data-act="fire0">Annuler</button>`:`<button class="btn ghost danger" data-act="fire1" data-id="${e.id}">Licencier</button>`}</div></div>`);
       } else { const n=S.candidates.filter(c=>c.role===r).length;
@@ -1614,6 +1757,39 @@ function viewEquipe(){
     return `<section class="post"><div class="post-head"><h3>${R.label}${slots>1?'s':''}</h3><p>${R.desc}</p>${eff?`<span class="chip up">${eff}</span>`:''}</div><div class="slots">${cells.join('')}</div></section>`;}).join('')}`;
 }
 
+// graphiques des 12 derniers mois + le mois en cours
+function barChart(vals,labels,fmt,cur){
+  const W=320,H=120,pad=18,n=vals.length,max=Math.max(1,...vals.map(Math.abs)),bw=(W-pad*2)/n;
+  const hasNeg=vals.some(v=>v<0), base=hasNeg?H/2:H-pad, sc=(hasNeg?H/2-pad:H-pad*2)/max;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${labels.map((l,i)=>l+' '+fmt(vals[i])).join(', ')}">
+    <line x1="${pad}" x2="${W-pad}" y1="${base}" y2="${base}" class="axis"/>
+    ${vals.map((v,i)=>{const h=Math.abs(v)*sc, x=pad+i*bw+bw*.18, y=v>=0?base-h:base;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${Math.max(1,h).toFixed(1)}" rx="2" class="${v<0?'neg':''} ${cur&&i===n-1?'cur':''}"><title>${labels[i]} : ${fmt(v)}</title></rect>`}).join('')}
+  </svg>`;
+}
+function lineChart(vals,labels){
+  const W=320,H=120,pad=18,n=vals.length,hi=Math.max(...vals),lo=Math.min(...vals),sp=Math.max(hi-lo,Math.abs(hi)*.1,1),mx=hi+sp*.15,mn=lo-sp*.15,r=mx-mn;
+  const pts=vals.map((v,i)=>[pad+(n>1?i*(W-pad*2)/(n-1):(W-pad*2)/2),H-pad-(v-mn)/r*(H-pad*2)]);
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Trésorerie en fin de mois">
+    <line x1="${pad}" x2="${W-pad}" y1="${H-pad}" y2="${H-pad}" class="axis"/>
+    <polyline points="${pts.map(p=>p.map(x=>x.toFixed(1)).join(',')).join(' ')}" class="ln"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" class="dot"><title>${labels[i]} : ${eur(vals[i])}</title></circle>`).join('')}
+  </svg>`;
+}
+function statsPanel(){
+  const M=S.months.slice(-11), cur={season:'En cours', sales:S.stats.sold-S.monthStart.sold, profit:S.stats.profit-S.monthStart.profit, money:Math.round(S.money)};
+  const all=[...M,cur], lab=all.map((m,i)=>i===all.length-1?'Mois en cours':`${m.season}`);
+  const avg=reviewAvg();
+  return `<section class="panel glass stats-panel"><h3>Statistiques</h3>
+    ${M.length?'':`<p class="meta">Les graphiques se remplissent à chaque fin de mois (toutes les 5 minutes).</p>`}
+    <div class="charts">
+      <figure><figcaption><span>Ventes par mois</span><span>ce mois : <b class="num">${cur.sales}</b></span></figcaption>${barChart(all.map(m=>m.sales),lab,v=>`${v} vente${v>1?'s':''}`,1)}</figure>
+      <figure><figcaption><span>Marge par mois</span><span>ce mois : <b class="num">${eur(cur.profit)}</b></span></figcaption>${barChart(all.map(m=>m.profit),lab,eur,1)}</figure>
+      <figure><figcaption><span>Trésorerie en fin de mois</span><span>maintenant : <b class="num">${eur(cur.money)}</b></span></figcaption>${lineChart(all.map(m=>m.money),lab)}</figure>
+    </div>
+    <div class="kv"><span>Note moyenne des clients</span><b class="num">${S.reviews.length?avg.toFixed(1).replace('.',',')+' / 5':'Aucun avis'}</b><span>Marge moyenne par vente</span><b class="num">${eur(S.stats.sold?Math.round(S.stats.profit/S.stats.sold):0)}</b></div>
+  </section>`;
+}
 function viewProfil(){
   const r=upgradeReqs();
   return `<div class="row" style="margin-top:22px"><button class="btn" data-act="tab" data-id="garage">Retour au garage</button></div>
@@ -1637,6 +1813,10 @@ function viewProfil(){
       <p class="meta">Coût : ${eur(r.u.cost)}. Débloque ${r.unlock}.</p>
       <button class="btn main" data-act="upgrade" ${r.list.every(x=>x.ok)?'':'disabled'}>${r.isStar?'Passer le palier':'Agrandir le garage'}</button>`
       :`<p class="meta">Concessionnaire de l’année : vous dirigez la plus belle concession de la ville. Visez maintenant le haut du classement.</p>`}
+    </section>
+    ${statsPanel()}
+    <section class="panel glass"><h3>Succès <small class="meta num">${Object.keys(S.badges).length} / ${BADGES.length}</small></h3>
+      <div class="badges">${BADGES.map(b=>{const g=S.badges[b.id];return `<div class="badge ${g?'on':''}" title="${esc(b.desc)}"><span class="bi" aria-hidden="true">${g?'★':'☆'}</span><div><b>${b.name}</b><small>${b.desc}</small></div></div>`}).join('')}</div>
     </section>
     <section class="panel glass"><h3>Journal</h3>
       ${S.log.length?`<ul class="log">${S.log.map(l=>`<li><time>${new Date(l.at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time><span>${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="meta">Rien pour l’instant.</p>'}
@@ -1777,6 +1957,7 @@ function renderModal(){
         <div class="row"><label class="field" for="counter"><input id="counter" data-draft="counter" inputmode="numeric" value="${esc(drafts.counter||'')}" aria-label="Contre-proposition"><span>€</span></label>
           <button class="btn" data-act="negoCounter">Contre-proposer</button></div>
         <div class="row"><button class="btn" data-act="negoCafe" ${c.coffee?'disabled':''}>${c.coffee?'Café offert':`Offrir un café <small>${has('cafe')?'offert':'5 €'}</small>`}</button>
+          <button class="btn" data-act="negoEssai" ${c.essai?'disabled':''}>${c.essai?'Essai fait':'Proposer un essai'}</button>
           <button class="btn" data-act="negoGeste" ${nego.geste?'disabled':''}>Garantie 6 mois <small>400 €</small></button>
           <button class="btn ghost danger" data-act="negoDismiss">Congédier</button></div>`}
       </div></div></div>`;
@@ -1856,6 +2037,12 @@ document.addEventListener('click',e=>{
     case 'negoCounter': negoCounter(); break;
     case 'negoGeste': negoGeste(); break;
     case 'negoCafe': negoCafe(); break;
+    case 'negoEssai': negoEssai(); break;
+    case 'franchise1': drafts.confirmFr=id; render(); break;
+    case 'franchise0': drafts.confirmFr=null; render(); break;
+    case 'franchise': switchFranchise(id); break;
+    case 'raiseOk': raiseAnswer(+id,true); break;
+    case 'raiseNo': raiseAnswer(+id,false); break;
     case 'negoDismiss': negoDismiss(); break;
     case 'buyDirect': todoOpen=false; buyDirect(n); break;
     case 'claim': claimObj(n); break;
