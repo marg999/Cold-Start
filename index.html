@@ -565,6 +565,23 @@ const MODELS = [
   {id:'sei',     brand:'Ferrano',   name:'Sei',          type:'supercar', tier:4, base:265000, w:72, colors:[['rouge','Rouge course'],['bleu','Bleu nuit']]},
   {id:'lockwood',brand:'Lockwood',  name:'780',          type:'supercar', tier:4, base:330000, w:74, colors:[['orange','Orange papaye'],['bleu','Bleu océan']]},
   {id:'raiden',  brand:'Kaiden',    name:'Raiden',       type:'supercar', tier:4, base:460000, w:72, colors:[['blanc','Blanc nacré'],['orange','Orange vif'],['gris','Gris anthracite']]},
+  // --- motos : deux par place de parking
+  {id:'citta',   brand:'Tamura',    name:'Città 125',    type:'moto', moto:1, tier:1, base:3800,  w:46, colors:[['blanc','Blanc nacré']]},
+  {id:'vespina', brand:'Alba',      name:'Vespina',      type:'moto', moto:1, tier:1, base:5200,  w:44, colors:[['vert','Vert menthe']]},
+  {id:'kraft390',brand:'Kraft',     name:'390 Duke',     type:'moto', moto:1, tier:1, base:6200,  w:46, colors:[['orange','Orange']]},
+  {id:'mt7',     brand:'Tamura',    name:'MT-7',         type:'moto', moto:1, tier:1, base:8500,  w:47, colors:[['bleu','Bleu profond']]},
+  {id:'bonne',   brand:'Whitfield', name:'Bonne 900',    type:'moto', moto:1, tier:2, base:12500, w:49, colors:[['vert','Vert anglais']]},
+  {id:'tenere',  brand:'Tamura',    name:'Ténéré 7',     type:'moto', moto:1, tier:2, base:13500, w:48, colors:[['blanc','Blanc rallye']]},
+  {id:'monstro', brand:'Corsa',     name:'Monstro',      type:'moto', moto:1, tier:2, base:14500, w:48, colors:[['rouge','Rouge italien']]},
+  {id:'arc',     brand:'Arc',       name:'S',            type:'moto', moto:1, tier:2, base:22000, w:49, colors:[['gris','Gris argent']]},
+  {id:'fat114',  brand:'Ironside',  name:'Fat 114',      type:'moto', moto:1, tier:2, base:24000, w:50, colors:[['noir','Noir chrome']]},
+  {id:'r1',      brand:'Tamura',    name:'R1',           type:'moto', moto:1, tier:3, base:23000, w:50, colors:[['bleu','Bleu course']]},
+  {id:'s1000',   brand:'Brenner',   name:'S 1000 RR',    type:'moto', moto:1, tier:3, base:25000, w:50, colors:[['blanc','Tricolore']]},
+  {id:'gs',      brand:'Brenner',   name:'GS 1300',      type:'moto', moto:1, tier:3, base:26000, w:48, colors:[['blanc','Blanc aventure']]},
+  {id:'roadking',brand:'Ironside',  name:'Road King',    type:'moto', moto:1, tier:3, base:32000, w:52, colors:[['noir','Noir filets gris']]},
+  {id:'cafe',    brand:'Whitfield', name:'Café 68',      type:'moto', moto:1, tier:3, base:18000, w:50, classic:[1965,1970], colors:[['argent','Alu poli']]},
+  {id:'veloce',  brand:'Corsa',     name:'Veloce V4',    type:'moto', moto:1, tier:4, base:38000, w:50, colors:[['rouge','Rouge course']]},
+  {id:'h2',      brand:'Ryujin',    name:'H2',           type:'moto', moto:1, tier:4, base:55000, w:50, colors:[['vert','Vert miroir']]},
 ];
 const CLIENT_NAMES = ['M. Bertin','Mme Lefèvre','M. Haddad','Mme Rossi','M. Petit','Mme Diallo','M. Garnier','Mme Moreau','M. Lambert','Mme Chevalier','M. Roux','Mme Fontaine','M. Nguyen','Mme Girard'];
 const RIVALS = ['Garage Martin','Auto Prestige 93','Occasions Leroy','M. Faure, marchand','Car Center Nord'];
@@ -577,12 +594,12 @@ const PERSONAS = {
 function pickPersona(){let r=Math.random()*100;for(const[k,p]of Object.entries(PERSONAS)){if((r-=p.w)<0)return k}return 'indecis'}
 
 /* Marché : une saison par mois de jeu, et parfois un événement qui fait bouger la cote d'un type de voiture */
-const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés',sport:'sportives',cabriolet:'cabriolets',electrique:'électriques',supercar:'supercars',collection:'voitures de collection'};
+const TYPE_LABEL={citadine:'citadines',compacte:'compactes',berline:'berlines',suv:'SUV',coupe:'coupés',sport:'sportives',cabriolet:'cabriolets',electrique:'électriques',supercar:'supercars',collection:'voitures de collection',moto:'motos'};
 const SEASONS=[
-  {name:'Printemps', fx:{coupe:.12, cabriolet:.15, citadine:.04, supercar:.05}},
-  {name:'Été',       fx:{coupe:.08, cabriolet:.10, citadine:.06, suv:-.05, collection:.08}},
-  {name:'Automne',   fx:{berline:.06, compacte:.04}},
-  {name:'Hiver',     fx:{suv:.12, coupe:-.08, cabriolet:-.15, sport:-.05, supercar:-.06}},
+  {name:'Printemps', fx:{coupe:.12, cabriolet:.15, citadine:.04, supercar:.05, moto:.06}},
+  {name:'Été',       fx:{coupe:.08, cabriolet:.10, citadine:.06, suv:-.05, collection:.08, moto:.10}},
+  {name:'Automne',   fx:{berline:.06, compacte:.04, moto:-.04}},
+  {name:'Hiver',     fx:{suv:.12, coupe:-.08, cabriolet:-.15, sport:-.05, supercar:-.06, moto:-.12}},
 ];
 const EVENTS=[
   {name:'Pénurie de puces', text:'Les voitures neuves manquent, l\'occasion grimpe partout.', fx:{all:.10}},
@@ -850,9 +867,10 @@ const capBays=()=>lvl().ateliers+(has('pont')?1:0)+(star()>=1?1:0);
 const LOTS_EVERY=5*60*1000;
 
 function newCar(tier,forceModel,forceColor){
-  const m=forceModel?model(forceModel):pick(MODELS.filter(x=>x.tier===tier));
+  const pool=MODELS.filter(x=>x.tier===tier), pm=pool.filter(x=>x.moto), pc=pool.filter(x=>!x.moto);
+  const m=forceModel?model(forceModel):pick(pm.length&&(Math.random()<.22||!pc.length)?pm:pc);
   const year=m.classic?ri(m.classic[0],m.classic[1]):ri(2011,2024), age=YEAR-year;
-  const km=m.classic?Math.round(rnd(80000,210000)/1000)*1000:Math.round((age*rnd(7000,19000)+rnd(0,6000))/1000)*1000;
+  const km=m.classic?Math.round((m.moto?rnd(15000,60000):rnd(80000,210000))/1000)*1000:Math.round((age*(m.moto?rnd(2500,7000):rnd(7000,19000))+rnd(0,m.moto?2000:6000))/1000)*1000;
   const q=rnd(.25,.92), c=()=>+clamp(q+rnd(-.25,.2),.08,1).toFixed(2);
   const col=(forceColor&&m.colors.find(x=>x[0]===forceColor))||pick(m.colors);
   return {uid:S.uid++, modelId:m.id, year, km, color:{s:col[0],n:col[1]}, cond:{meca:c(),carro:c(),inter:c(),pneus:c()},
@@ -875,7 +893,10 @@ function refreshLots(){ S.lots=[]; for(let i=0;i<lotCount();i++) S.lots.push(new
     S.lots[lotCount()-1]=newLot(forced); }
   S.lotsAt=now()+LOTS_EVERY; }
 function log(t){S.log.unshift({t,at:now()}); S.log=S.log.slice(0,60);}
-const parkingUsed=()=>S.cars.length;
+const isMoto=c=>!!model(c.modelId).moto;
+const parkingUsed=()=>{const mo=S.cars.filter(isMoto).length;return S.cars.length-mo+Math.ceil(mo/2);};
+// une moto se glisse à côté d'une autre moto déjà garée seule sur sa place
+const noRoomFor=car=>{const mo=S.cars.filter(isMoto).length, extra=car&&isMoto(car)&&mo%2?0:1; return parkingUsed()+extra>capPark();};
 const ateliersUsed=()=>S.cars.filter(c=>c.status==='atelier').length;
 const onSale=()=>S.cars.filter(c=>c.status==='vente');
 const needsRepair=c=>Object.keys(COMPS).some(k=>c.cond[k]<.9);
@@ -956,7 +977,7 @@ function limitedTick(t){
   if(!S.nextLimitedAt){ S.nextLimitedAt=t+rnd(4,6)*60000; return false; }
   if(t<S.nextLimitedAt) return false;
   const pool=fr().line.map(model).filter(x=>x&&x.tier!==1);
-  const m=S.franchise==='brenner'&&Math.random()<.45?model('s3evo'):pick(pool.length?pool:MODELS.filter(x=>x.tier>=3&&x.tier<=4&&!x.classic)), col=pick(m.colors);
+  const m=S.franchise==='brenner'&&Math.random()<.45?model('s3evo'):pick(pool.length?pool:MODELS.filter(x=>x.tier>=3&&x.tier<=4&&!x.classic&&!x.moto)), col=pick(m.colors);
   S.limited={id:S.uid++, modelId:m.id, color:col[0], colorN:col[1], edition:pick(EDITIONS), price:r100(listPrice(m.id)*1.1), endsAt:t+4*60000};
   toast(`Édition limitée disponible : ${m.brand} ${m.name} ${S.limited.edition}, un seul exemplaire.`,'',{label:'Voir',act:'tab',id:'achats'});
   return true;
@@ -983,7 +1004,7 @@ function inspect(lotId){
 const stepOf=p=>p<5000?100:p<20000?250:500;
 function startAuction(lotId){
   const l=S.lots.find(x=>x.id===lotId); if(!l)return;
-  if(parkingUsed()>=capPark())return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  if(noRoomFor(l.car))return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
   auction={lotId, price:l.start, leader:null, endsAt:now()+15000, rivalMax:l.rivalMax,
     nextRivalAt:now()+rnd(1800,3500), rival:pick(RIVALS), done:false, carCache:l.car};
   renderModal();
@@ -1029,8 +1050,8 @@ function startRepair(uid,k){
   S.money-=cost; car.spent+=cost; S.stats.spent+=cost;
   if(car.status==='vente'){ car.relist=car.ask; S.clients=S.clients.filter(c=>c.carUid!==uid||c.handledBy); }
   car.status='atelier'; car.job={k,start:now(),endsAt:now()+repairTime(car,k)};
-  hist(car,`${COMPS[k].label} remise à neuf`,cost);
-  toast(`${carName(car)} sur le pont : ${COMPS[k].label.toLowerCase()}.`); commit();
+  hist(car,`${compLabel(car,k)} remise à neuf`,cost);
+  toast(`${carName(car)} sur le pont : ${compLabel(car,k).toLowerCase()}.`); commit();
 }
 
 // --- Prix et ventes
@@ -1185,7 +1206,7 @@ function sell(c,price,msg){
 }
 function tradeAccept(){
   const t=nego&&nego.trade; if(!t)return;
-  if(parkingUsed()>=capPark())return toast('Parking plein : impossible de reprendre la voiture.','bad');
+  if(noRoomFor(t.car))return toast('Parking plein : impossible de reprendre la voiture.','bad');
   if(S.money<t.price)return toast('Trésorerie insuffisante pour cette reprise.','bad');
   t.car.uid=S.uid++; acquire(t.car,t.price,`Reprise de ${nego.name}`);
   log(`Reprise : ${carName(t.car)} de ${nego.name} pour ${eur(t.price)}.`);
@@ -1232,7 +1253,7 @@ function adInspect(id){
 }
 function adBuy(id){
   const a=S.ads.find(x=>x.id===id); if(!a)return;
-  if(parkingUsed()>=capPark())return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
+  if(noRoomFor(a.car))return toast('Parking plein : vendez une voiture ou agrandissez.','bad');
   if(S.money<a.price)return toast('Trésorerie insuffisante.','bad');
   const car=a.real; car.spent=a.checked?150:0; car.uid=a.id; car.hist=[];
   S.ads=S.ads.filter(x=>x.id!==id);
@@ -1458,7 +1479,7 @@ function empTask(e){
   }
   if(e.role==='mecano'){
     const i=staffOf('mecano').indexOf(e), car=S.cars.filter(c=>c.status==='atelier')[i];
-    return car?{label:`${COMPS[car.job.k].label} de la ${carName(car)}`,start:car.job.start,end:car.job.endsAt}:{label:i<capBays()?`Attend une voiture au pont ${i+1}`:'Aide à l’atelier'};
+    return car?{label:`${compLabel(car,car.job.k)} de la ${carName(car)}`,start:car.job.start,end:car.job.endsAt}:{label:i<capBays()?`Attend une voiture au pont ${i+1}`:'Aide à l’atelier'};
   }
   if(e.role==='accueil'){
     return onSale().length&&S.nextClientAt>now()?{label:'Fait venir le prochain client',start:S.lastClientAt||now(),end:S.nextClientAt}:{label:onSale().length?'Accueille les clients':'Attend que des voitures soient exposées'};
@@ -1513,7 +1534,7 @@ function objEvent(type,amount=1,data){
   }
 }
 function saleEvent(car,profit,nego){ const sm=model(car.modelId);
-  if(sm.tier===3) S.flags.sport=1; if(sm.tier===4) S.flags.super=1; if(sm.classic) S.flags.classic=1; if(car.limited) S.flags.limited=1; if(profit>=50000) S.flags.big=1; if(car.neuf&&!car.limited) S.newSold=(S.newSold||0)+1; objEvent('sale',1,{profit,nego,sport:model(car.modelId).tier>=3&&model(car.modelId).tier<=4,neuf:!!car.neuf}); }
+  if(sm.moto) S.flags.moto=1; if(sm.tier===3&&!sm.moto) S.flags.sport=1; if(sm.tier===4) S.flags.super=1; if(sm.classic) S.flags.classic=1; if(car.limited) S.flags.limited=1; if(profit>=50000) S.flags.big=1; if(car.neuf&&!car.limited) S.newSold=(S.newSold||0)+1; objEvent('sale',1,{profit,nego,sport:model(car.modelId).tier>=3&&model(car.modelId).tier<=4,neuf:!!car.neuf}); }
 function objTick(){
   let ch=ensureObjs();
   for(const o of S.objs) if(o.type==='rep' && !o.done){
@@ -1542,7 +1563,7 @@ function tick(){
     const k=car.job.k; car.cond[k]=.95;
     if(car.relist){ car.status='vente'; car.ask=car.relist; } else car.status='stock';
     delete car.relist; delete car.job; objEvent('repair'); if(staffOf('mecano').length) gainXp(pick(staffOf('mecano')),1);
-    toast(`Atelier terminé : ${carName(car)}, ${COMPS[k].label.toLowerCase()} remise à neuf.`,'good',{label:car.status==='vente'?'Fiche':'Mettre en vente',act:'fiche',id:car.uid});
+    toast(`Atelier terminé : ${carName(car)}, ${compLabel(car,k).toLowerCase()} remise à neuf.`,'good',{label:car.status==='vente'?'Fiche':'Mettre en vente',act:'fiche',id:car.uid});
     changed=true; }});
   if(objTick()) changed=true;
   if(t>=S.lotsAt && !(auction&&!auction.done)){ refreshLots(); toast('Nouvelle vente aux enchères : 4 lots à découvrir.','',{label:'Voir',act:'tab',id:'achats'}); changed=true; }
@@ -1572,6 +1593,7 @@ const BADGES=[
   {id:'sale25', name:'Vendeur confirmé', desc:'Vendre 25 voitures', ok:()=>S.stats.sold>=25},
   {id:'sale100', name:'Centurion', desc:'Vendre 100 voitures', ok:()=>S.stats.sold>=100},
   {id:'sale250', name:'Machine à vendre', desc:'Vendre 250 voitures', ok:()=>S.stats.sold>=250},
+  {id:'moto', name:'Deux roues', desc:'Vendre une moto', ok:()=>!!S.flags.moto},
   {id:'sport', name:'Sang sportif', desc:'Vendre une sportive', ok:()=>!!S.flags.sport},
   {id:'super', name:'Supercar', desc:'Vendre une supercar', ok:()=>!!S.flags.super},
   {id:'classic', name:'Collectionneur', desc:'Vendre une voiture de collection', ok:()=>!!S.flags.classic},
@@ -1599,7 +1621,8 @@ function commit(){checkBadges(); save(); render();}
    ===================================================================== */
 const carName=car=>{const m=model(car.modelId);return `${m.brand} ${m.name}${car.edition?' '+car.edition:''}`};
 const CARSIL="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 470'><path d='M60 360c0-40 20-70 70-82l120-30 90-70c25-20 60-30 100-30h170c45 0 80 15 110 45l60 60 70 12c40 8 60 35 60 70v40c0 15-10 25-25 25H85c-15 0-25-10-25-25z' fill='%23463a2f'/><circle cx='230' cy='395' r='62' fill='%23241c16'/><circle cx='680' cy='395' r='62' fill='%23241c16'/><text x='450' y='240' text-anchor='middle' font-family='sans-serif' font-size='34' fill='%23a99c8b'>Photo à venir</text></svg>");
-const imgOf=car=>`voiture-${car.modelId}-${car.color.s}.webp`;
+const imgOf=car=>`${model(car.modelId).moto?'moto':'voiture'}-${car.modelId}-${car.color.s}.webp`;
+const compLabel=(car,k)=>k==='inter'&&car&&model(car.modelId).moto?'Selle':COMPS[k].label;
 function stage(car,o={}){
   const m=model(car.modelId), src=imgOf(car);
   const dust=car.inspected?clamp((1-car.cond.carro)*.85,0,.75):.2;
@@ -1615,7 +1638,7 @@ function stage(car,o={}){
 }
 const condColor=v=>v>=.7?'var(--good)':v>=.45?'var(--warn)':'var(--bad)';
 function condsHTML(car){
-  return `<div class="conds">${Object.entries(COMPS).map(([k,c])=>`<div class="cond"><div><span>${c.label}</span><span class="num">${Math.round(car.cond[k]*100)} %</span></div><div class="bar"><i style="width:${car.cond[k]*100}%;background:${condColor(car.cond[k])}"></i></div></div>`).join('')}</div>`;
+  return `<div class="conds">${Object.entries(COMPS).map(([k,c])=>`<div class="cond"><div><span>${compLabel(car,k)}</span><span class="num">${Math.round(car.cond[k]*100)} %</span></div><div class="bar"><i style="width:${car.cond[k]*100}%;background:${condColor(car.cond[k])}"></i></div></div>`).join('')}</div>`;
 }
 function head(car,right){
   const m=model(car.modelId);
@@ -1686,7 +1709,7 @@ function render(){
     <div class="hero-r">${miniMap()}<div class="stats">
       <div class="stat glass money"><span>Trésorerie</span><b class="num">${eur(S.money)}</b></div>
       <div class="stat glass"><span>Réputation</span><b class="num">${S.rep}<small style="font-size:12px;color:var(--muted);font-weight:500"> / 100</small></b><div class="repbar"><i style="width:${S.rep}%"></i></div></div>
-      <div class="stat glass"><span>Parking</span><b class="num">${parkingUsed()} / ${capPark()}</b></div>
+      <div class="stat glass" title="Deux motos tiennent sur une place"><span>Parking</span><b class="num">${parkingUsed()} / ${capPark()}</b></div>
       ${fb.ok?(fb.user?`<button class="stat glass acct" data-act="tab" data-id="profil"><span>Compte</span><b>${esc(S.pseudo||'Joueur')}</b></button>`:`<button class="stat glass acct" data-act="acctOpen" data-id="login"><span>Compte</span><b>Se connecter</b></button>`):''}
     </div></div>`;
   const waiting=S.clients.filter(c=>!c.handledBy).length;
@@ -1811,7 +1834,7 @@ function viewAchats(){
 
 // --- Garage : les ponts, toutes les voitures avec leur action principale, et les améliorations
 function carStatusLine(c){
-  if(c.status==='atelier') return `<div class="status">Sur le pont : ${COMPS[c.job.k].label.toLowerCase()}, fin dans <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></div>${pbar(c.job.start,c.job.endsAt)}`;
+  if(c.status==='atelier') return `<div class="status">Sur le pont : ${compLabel(c,c.job.k).toLowerCase()}, fin dans <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></div>${pbar(c.job.start,c.job.endsAt)}`;
   if(c.prepping){ const p=S.staff.find(e=>e.id===c.prepping); const tk=p&&p.task; return `<div class="status">Préparation par ${esc(p?p.name.split(' ')[0]:'l’équipe')}…</div>${tk?pbar(tk.start,tk.endsAt):''}`; }
   if(c.status==='vente'){ const g=chance(c,c.ask); return `<div class="status">En vente à <b class="num" style="color:var(--fg)">${eur(c.ask)}</b> · <span class="chance ${g.cls}">${g.label}</span></div>`; }
   return `<div class="status">Sur le parking${c.prepPending?' · en attente de préparation':''}</div>`;
@@ -1827,7 +1850,7 @@ function viewGarage(){
   for(let i=0;i<capBays();i++){ const c=busy[i], mec=mecs[i];
     bays.push(`<div class="bayc glass">${c?`<img class="thumb" src="${imgOf(c)}" alt="" onerror="this.onerror=null;this.src=CARSIL">`:`<div class="thumb empty-thumb" aria-hidden="true"></div>`}
       <div class="bay-txt"><span class="eyebrow">${mec?portrait(empSrc('mecano',mec.look),'face xs',mec.name):''}Pont ${i+1}${mec?` · ${esc(mec.name.split(' ')[0])}`:''}</span>
-      ${c?`<b>${carName(c)}</b><small>${COMPS[c.job.k].label} · <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></small>${pbar(c.job.start,c.job.endsAt)}`:`<b>Libre</b><small>Ouvrez la fiche d'une voiture pour la réparer.</small>`}</div></div>`); }
+      ${c?`<b>${carName(c)}</b><small>${compLabel(c,c.job.k)} · <span class="num" data-ends="${c.job.endsAt}">${mmss(c.job.endsAt-now())}</span></small>${pbar(c.job.start,c.job.endsAt)}`:`<b>Libre</b><small>Ouvrez la fiche d'une voiture pour la réparer.</small>`}</div></div>`); }
   const order={vente:1,stock:0,atelier:2};
   const cars=[...S.cars].sort((a,b)=>(order[a.status]-order[b.status])||(a.uid-b.uid));
   const avail=UPG.filter(u=>!has(u.id));
@@ -1980,10 +2003,10 @@ function ficheHTML(car){
         ${hist.length?`<ul class="hist">${hist.map(h=>`<li><span>${esc(h.t)}</span>${h.v?`<b class="num">${eur(h.v)}</b>`:''}</li>`).join('')}</ul>`:''}
       </section>
       <section class="fcol"><h4>État et réparations</h4>
-        ${car.status==='atelier'?`<div class="status">${COMPS[car.job.k].label} en cours · <span class="num" data-ends="${car.job.endsAt}">${mmss(car.job.endsAt-now())}</span></div>${pbar(car.job.start,car.job.endsAt)}`:''}
+        ${car.status==='atelier'?`<div class="status">${compLabel(car,car.job.k)} en cours · <span class="num" data-ends="${car.job.endsAt}">${mmss(car.job.endsAt-now())}</span></div>${pbar(car.job.start,car.job.endsAt)}`:''}
         ${car.prepping?`<div class="status">Préparation en cours par l'équipe.</div>`:''}
         <div class="comps">${Object.entries(COMPS).map(([k,x])=>{const val=car.cond[k], gain=valueOf(car,avgCond({...car.cond,[k]:.95}))-v;
-          return `<div class="comp"><div class="comp-l"><div class="row" style="justify-content:space-between"><span>${x.label}</span><span class="num" style="color:${condColor(val)}">${Math.round(val*100)} %</span></div>
+          return `<div class="comp"><div class="comp-l"><div class="row" style="justify-content:space-between"><span>${compLabel(car,k)}</span><span class="num" style="color:${condColor(val)}">${Math.round(val*100)} %</span></div>
             <div class="bar"><i style="width:${val*100}%;background:${condColor(val)}"></i></div></div>
             ${val<.9&&canEdit?`<button class="btn sm rep" data-act="repair" data-id="${car.uid}" data-k="${k}" ${bayFree?'':'disabled'}><span>Réparer ${eur(repairCost(car,k))}</span><small>${Math.round(repairTime(car,k)/1000)} s · valeur +${eur(gain)}</small></button>`:`<span class="comp-ok">${val>=.9?'Bon état':''}</span>`}</div>`}).join('')}</div>
         ${canEdit&&needsRepair(car)&&!bayFree?`<p class="meta small">Tous les ponts sont occupés.</p>`:car.status==='vente'&&needsRepair(car)?`<p class="meta small">Pendant la réparation, elle quitte le showroom puis y revient au même prix.</p>`:''}
